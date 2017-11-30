@@ -887,23 +887,25 @@
     self.cdv_command = command;
     NSDictionary *params = (NSDictionary*) [cdv_command argumentAtIndex:0];
     
-    RDFormManager *fe = [[RDFormManager alloc] initWithDoc:[m_pdf getDoc]];
-    
     NSError *error;
-    if ([params objectForKey:@"json"]) {
-        [fe setInfoWithJson:[params objectForKey:@"json"] error:&error];
-        
-        if (error) {
-            [self cdvErrorWithMessage:[error description]];
-        } else
-        {
-            if (m_pdf) {
-                [[NSNotificationCenter defaultCenter] postNotificationName:@"Radaee-Refresh-Page" object:nil];
+    if ([params objectForKey:@"url"] && [params objectForKey:@"codes"]) {
+        NSString *prefix = @"file://";
+        NSString *url = [[params objectForKey:@"url"] substringFromIndex:[prefix length]];
+        RDFormManager *fe = [[RDFormManager alloc] init];
+        [self readerInit];
+        @try {
+            [m_pdf PDFOpen:url :NULL atPage:0 readOnly:false autoSave:true];
+            [fe setInfoWithJson:[m_pdf getDoc] codes:[params objectForKey:@"codes"] error:&error];
+            if (error) {
+                [self cdvErrorWithMessage:[error description]];
+            } else {
+                [self setFormFieldsResult];
             }
-            [self setFormFieldsResult];
+        } @finally {
+            [m_pdf PDFClose];
         }
-    } else
-    {
+        
+    } else {
         [self cdvErrorWithMessage:@"JSON not found"];
     }
 }

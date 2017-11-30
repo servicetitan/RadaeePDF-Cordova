@@ -24,10 +24,12 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.webkit.URLUtil;
 
+import com.google.common.base.Strings;
+
 import com.radaee.pdf.Global;
 import com.radaee.pdf.Page;
 import com.radaee.reader.PDFViewAct;
-import com.radaee.reader.R; 
+import com.servicetitan.mobile.R; 
 import com.radaee.util.BookmarkHandler;
 import com.radaee.util.RadaeePDFManager;
 import com.radaee.util.RadaeePluginCallback;
@@ -161,9 +163,14 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
                 break;
             case "setFormFieldWithJSON":  //Set form fields' values
                 params = args.getJSONObject(0);
-                callbackContext.success("Result = " + mPdfManager.setFormFieldsWithJSON(params.optString("json")));
+                String url = mPdfManager.setFormFieldsWithJSON(params.optString("url"), params.getJSONObject("codes"));
+                if (Strings.isNullOrEmpty(url)) {
+                    callbackContext.error("JSON property set failed");
+                } else {
+                    callbackContext.success("JSON property set successfully");
+                }
                 break;
-            case "setReaderBGColor":  //sets reader view background color
+           case "setReaderBGColor":  //sets reader view background color
                 params = args.getJSONObject(0);
                 mPdfManager.setReaderBGColor(params.optInt("color"));
                 callbackContext.success("Color passed to the reader");

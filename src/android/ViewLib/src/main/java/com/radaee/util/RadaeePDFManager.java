@@ -6,12 +6,18 @@ import android.text.TextUtils;
 import android.webkit.URLUtil;
 import android.widget.Toast;
 
+import com.google.common.base.Strings;
+
 import com.radaee.pdf.Global;
 import com.radaee.pdf.Page;
 import com.radaee.reader.PDFViewAct;
-import com.radaee.viewlib.R;
+import com.servicetitan.mobile.R;
+import com.radaee.pdf.Document;
+import com.radaee.pdf.Page.Annotation;
 
 import java.io.File;
+
+import org.json.JSONObject;
 
 /**
  * A class that can be used by depending modules, to facilitate the PDF Viewer usage.
@@ -260,10 +266,43 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
      * Using the passed json, you can set the value of form fields like: Text fields, checkbox,
      * combo, radio buttons.
      *
-     * @param json object of the document form fields dictionary
+     * @param url form url
+     * @param codes smart fields code
      */
-    public String setFormFieldsWithJSON(String json) {
-        return RadaeePluginCallback.getInstance().onSetFormFieldsWithJSON(json);
+    public String setFormFieldsWithJSON(String url, JSONObject codes) {
+        Document document = null;
+        String prefix = "file://";
+        String pdfPath = url.substring(url.indexOf(prefix) + prefix.length());
+        try {
+            document = new Document();
+            int res = document.Open(pdfPath, null);
+            if (res < 0) {
+                return null;
+            }
+            int pageCount = document.GetPageCount();
+            for (int i = 0; i < pageCount; i++) {
+                Page page = document.GetPage(i);
+                page.ObjsStart();
+                int annotCount = page.GetAnnotCount();
+                for (int j = 0; j < annotCount; j++) {
+                    Annotation annotation = page.GetAnnot(j);
+                    String annotationText = annotation.GetEditText();
+                    String replacement = codes.optString(annotationText);
+                    if (replacement.equals("null")) {
+                        replacement = "";
+                    }
+                    if (!Strings.isNullOrEmpty(annotationText)) {
+                        annotation.SetEditText(replacement);
+                    }
+                }
+            }
+        } finally {
+            if (document != null) {
+                document.Save();
+                document.Close();
+            }
+        }
+        return url;
     }
 
     /**

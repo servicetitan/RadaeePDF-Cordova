@@ -35,24 +35,31 @@
 #pragma mark - Set Info
 
 //Set fields with JSON string
-- (void)setInfoWithJson:(NSString *)json error:(NSError **)error
+- (void)setInfoWithJson:(PDFDoc *)document codes:(NSDictionary *)codes error:(NSError **)error
 {
-    if (![currentDoc canSave]) {
+    if (![document canSave]) {
         *error = [NSError errorWithDomain:[[[NSBundle mainBundle] bundleIdentifier] stringByAppendingString:@".ErrorDomain"] code:101 userInfo:@{@"readonly-document": @"The PDFDoc instance is readonly"}];
         return;
     }
-    
-    id dict = [self jsonStructFromString:json];
-    
-    if ([dict objectForKey:@"Pages"]) {
-        NSArray *pages = [dict objectForKey:@"Pages"];
-        
-        for (NSDictionary *pageDict in pages) {
-            [self parsePage:pageDict error:error];
+    int pageCount = document.pageCount;
+    for (int i = 0; i < pageCount; i++) {
+        PDFPage *page = [document page:i];
+        [page objsStart];
+        int annotCount = [page annotCount];
+        for (int j = 0; j < annotCount; j++) {
+            PDFAnnot *annotation = [page annotAtIndex:j];
+            NSString *code = [annotation getEditText];
+            NSString *replacement = [codes objectForKey:code];
+            if ([replacement isEqualToString:@"null"]) {
+                replacement = @"";
+            }
+            if (code) {
+                [annotation setEditText:replacement];
+            }
         }
-    } else {
-        *error = [NSError errorWithDomain:[[[NSBundle mainBundle] bundleIdentifier] stringByAppendingString:@".ErrorDomain"] code:102 userInfo:@{@"pages-attribute": @"\"Pages\" attribute is missing"}];
+        page = nil;
     }
+    [document save];
 }
 
 //Parse Page Dictionary

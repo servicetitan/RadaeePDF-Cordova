@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "PDFObjc.h"
 
 @interface RDFormManager : NSObject
 
@@ -18,6 +19,6 @@
 - (NSString *)jsonInfoForPage:(int)page;
 
 //Setter
-- (void)setInfoWithJson:(NSString *)json error:(NSError **)error;
+- (void)setInfoWithJson:(PDFDoc *)document codes:(NSDictionary *)codes error:(NSError **)error;
 
 @end
