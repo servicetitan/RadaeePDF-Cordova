@@ -24,10 +24,12 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.webkit.URLUtil;
 
+import com.google.common.base.Strings;
+
 import com.radaee.pdf.Global;
 import com.radaee.pdf.Page;
 import com.radaee.reader.PDFViewAct;
-import com.radaee.reader.R; 
+import com.servicetitan.mobile.R; 
 import com.radaee.util.BookmarkHandler;
 import com.radaee.util.RadaeePDFManager;
 import com.radaee.util.RadaeePluginCallback;
@@ -61,6 +63,7 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
 	private static CallbackContext sDidDoubleTap;
     private static CallbackContext sDidLongPress;
     private static final String TAG = "RadaeePDFPlugin";
+    private CallbackContext callbackContext;
 
 	/**
      * Constructor.
@@ -138,7 +141,11 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
                     mPdfManager.show(mContext, targetPath, params.optString("password"), params.optBoolean("readOnlyMode"),
                             params.optBoolean("automaticSave"), params.optInt("gotoPage"), params.optString("bmpFormat"), params.optString("author"));
                     showPdfInProgress = false;
-                    callbackContext.success("Pdf local opening success");
+                    
+                    this.callbackContext = callbackContext;
+                    PluginResult result = new PluginResult(PluginResult.Status.OK, "opened");
+                    result.setKeepCallback(true);
+                    this.callbackContext.sendPluginResult(result);
                 } else {
                     showPdfInProgress = false;
                     callbackContext.error("url is null or white space, this is a mandatory parameter");
@@ -156,9 +163,14 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
                 break;
             case "setFormFieldWithJSON":  //Set form fields' values
                 params = args.getJSONObject(0);
-                callbackContext.success("Result = " + mPdfManager.setFormFieldsWithJSON(params.optString("json")));
+                String url = mPdfManager.setFormFieldsWithJSON(params.optString("url"), params.getJSONObject("codes"));
+                if (Strings.isNullOrEmpty(url)) {
+                    callbackContext.error("JSON property set failed");
+                } else {
+                    callbackContext.success("JSON property set successfully");
+                }
                 break;
-            case "setReaderBGColor":  //sets reader view background color
+           case "setReaderBGColor":  //sets reader view background color
                 params = args.getJSONObject(0);
                 mPdfManager.setReaderBGColor(params.optInt("color"));
                 callbackContext.success("Color passed to the reader");
@@ -248,98 +260,125 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
 
     @Override
     public void willShowReader() {
-        if(sWillShowReader != null) {
-            PluginResult result = new PluginResult(PluginResult.Status.OK);
-            result.setKeepCallback(true);
-            sWillShowReader.sendPluginResult(result);
+        if (sWillShowReader == null) {
+            return;
         }
+        
+        PluginResult result = new PluginResult(PluginResult.Status.OK);
+        result.setKeepCallback(true);
+        sWillShowReader.sendPluginResult(result);
     }
 
     @Override
     public void didShowReader() {
-        if(sDidShowReader != null) {
-            PluginResult result = new PluginResult(PluginResult.Status.OK);
-            result.setKeepCallback(true);
-            sDidShowReader.sendPluginResult(result);
+        if (sDidShowReader == null) {
+            return;
         }
+        
+        PluginResult result = new PluginResult(PluginResult.Status.OK);
+        result.setKeepCallback(true);
+        sDidShowReader.sendPluginResult(result);
         //Log.d(TAG, mPdfManager.encryptDocAs("/mnt/sdcard/Download/pdf/License_enc.pdf", "12345", "", 4, 4, "123456789abcdefghijklmnopqrstuvw"));
     }
 
     @Override
     public void willCloseReader() {
-        if(sWillCloseReader != null) {
-            PluginResult result = new PluginResult(PluginResult.Status.OK);
-            result.setKeepCallback(true);
-            sWillCloseReader.sendPluginResult(result);
+        if (sWillCloseReader == null) {
+            return;
         }
+        
+        PluginResult result = new PluginResult(PluginResult.Status.OK);
+        result.setKeepCallback(true);
+        sWillCloseReader.sendPluginResult(result);
     }
 
     @Override
     public void didCloseReader() {
-        if(sDidCloseReader != null) {
-            PluginResult result = new PluginResult(PluginResult.Status.OK);
-            result.setKeepCallback(true);
-            sDidCloseReader.sendPluginResult(result);
+        if (this.callbackContext == null) {
+            return;
         }
+        
+        this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, "closed"));
+        this.callbackContext = null;
+        
+        if (sDidCloseReader == null) {
+            return;
+        }
+        
+        PluginResult result = new PluginResult(PluginResult.Status.OK);
+        result.setKeepCallback(true);
+        sDidCloseReader.sendPluginResult(result);
     }
-
+    
     @Override
     public void didChangePage(int pageno) {
-        if(sDidChangePage != null) {
-            PluginResult result = new PluginResult(PluginResult.Status.OK, pageno);
-            result.setKeepCallback(true);
-            sDidChangePage.sendPluginResult(result);
+        if (sDidChangePage == null) {
+            return;
         }
+        
+        PluginResult result = new PluginResult(PluginResult.Status.OK, pageno);
+        result.setKeepCallback(true);
+        sDidChangePage.sendPluginResult(result);
     }
 
     @Override
     public void didSearchTerm(String query, boolean found) {
-        if(sDidSearchTerm != null) {
-            PluginResult result = new PluginResult(PluginResult.Status.OK, query);
-            result.setKeepCallback(true);
-            sDidSearchTerm.sendPluginResult(result);
+        if (sDidSearchTerm == null) {
+            return;
         }
+        
+        PluginResult result = new PluginResult(PluginResult.Status.OK, query);
+        result.setKeepCallback(true);
+        sDidSearchTerm.sendPluginResult(result);
     }
 
     @Override
     public void onBlankTapped(int pageno) {
-        if(sDidTapOnPage != null) {
-            PluginResult result = new PluginResult(PluginResult.Status.OK, pageno);
-            result.setKeepCallback(true);
-            sDidTapOnPage.sendPluginResult(result);
+        if (sDidTapOnPage == null) {
+            return;
         }
+        
+        PluginResult result = new PluginResult(PluginResult.Status.OK, pageno);
+        result.setKeepCallback(true);
+        sDidTapOnPage.sendPluginResult(result);
     }
 
     @Override
     public void onAnnotTapped(Page.Annotation annot) {
-        if(sDidTapOnAnnot != null) {
-            PluginResult result = new PluginResult(PluginResult.Status.OK, annot.GetType());
-            result.setKeepCallback(true);
-            sDidTapOnAnnot.sendPluginResult(result);
+        if (sDidTapOnAnnot == null) {
+            return;
         }
+        
+        PluginResult result = new PluginResult(PluginResult.Status.OK, annot.GetType());
+        result.setKeepCallback(true);
+        sDidTapOnAnnot.sendPluginResult(result);
     }
 
     @Override
     public void onDoubleTapped(int pageno, float x, float y) {
-        if(sDidDoubleTap != null) {
-            PluginResult result = new PluginResult(PluginResult.Status.OK, pageno);
-            result.setKeepCallback(true);
-            sDidDoubleTap.sendPluginResult(result);
+        if (sDidDoubleTap == null) {
+            return;
         }
+        
+        PluginResult result = new PluginResult(PluginResult.Status.OK, pageno);
+        result.setKeepCallback(true);
+        sDidDoubleTap.sendPluginResult(result);
     }
 
     @Override
     public void onLongPressed(int pageno, float x, float y) {
-        if(sDidLongPress != null) {
-            PluginResult result = new PluginResult(PluginResult.Status.OK, pageno);
-            result.setKeepCallback(true);
-            sDidLongPress.sendPluginResult(result);
+        if (sDidLongPress == null) {
+            return;
         }
+        
+        PluginResult result = new PluginResult(PluginResult.Status.OK, pageno);
+        result.setKeepCallback(true);
+        sDidLongPress.sendPluginResult(result);
     }
 
     private void handleBookmarkActions(String action, JSONObject params, CallbackContext callbackContext) {
         Context mContext = this.cordova.getActivity().getApplicationContext();
-        if(!Global.isLicenseActivated())
+        if (!Global.isLicenseActivated())
             Global.Init(mContext);
 
         String filePath = params.optString("pdfPath");
@@ -347,8 +386,8 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
             callbackContext.error("pdfPath is null or white space, this is a mandatory parameter");
             return;
         }
-
-        if(URLUtil.isFileUrl(filePath)) {
+        
+        if (URLUtil.isFileUrl(filePath)) {
             String prefix = "file://";
             filePath = filePath.substring(filePath.indexOf(prefix) + prefix.length());
         }
@@ -389,7 +428,7 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
         Context mContext = this.cordova.getActivity().getApplicationContext();
 
         String bookmarks = mPdfManager.getBookmarksAsJson(filePath);
-        if(TextUtils.isEmpty(bookmarks))
+        if (TextUtils.isEmpty(bookmarks))
             callbackContext.error(mContext.getString(R.string.no_bookmarks));
         else
             callbackContext.success("Bookmarks json: " + bookmarks);

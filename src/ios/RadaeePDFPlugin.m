@@ -13,11 +13,12 @@
 #pragma mark - Synthesize
 
 @interface RadaeePDFPlugin() <RDPDFViewControllerDelegate>
-
-@end
+    @property (nonatomic) NSString* callbackId;
+    @end
 
 @implementation RadaeePDFPlugin
 @synthesize cdv_command;
+@synthesize callbackId;
 
 #pragma mark - Cordova Plugin
 
@@ -414,7 +415,7 @@
 
 - (void)showReader
 {
-    [self pdfChargeDidFinishLoading];
+    self.callbackId = self.cdv_command.callbackId;
     
     //toggle thumbnail/seekbar
     if (bottomBar < 1){
@@ -886,23 +887,25 @@
     self.cdv_command = command;
     NSDictionary *params = (NSDictionary*) [cdv_command argumentAtIndex:0];
     
-    RDFormManager *fe = [[RDFormManager alloc] initWithDoc:[m_pdf getDoc]];
-    
     NSError *error;
-    if ([params objectForKey:@"json"]) {
-        [fe setInfoWithJson:[params objectForKey:@"json"] error:&error];
-        
-        if (error) {
-            [self cdvErrorWithMessage:[error description]];
-        } else
-        {
-            if (m_pdf) {
-                [[NSNotificationCenter defaultCenter] postNotificationName:@"Radaee-Refresh-Page" object:nil];
+    if ([params objectForKey:@"url"] && [params objectForKey:@"codes"]) {
+        NSString *prefix = @"file://";
+        NSString *url = [[params objectForKey:@"url"] substringFromIndex:[prefix length]];
+        RDFormManager *fe = [[RDFormManager alloc] init];
+        [self readerInit];
+        @try {
+            [m_pdf PDFOpen:url :NULL atPage:0 readOnly:false autoSave:true];
+            [fe setInfoWithJson:[m_pdf getDoc] codes:[params objectForKey:@"codes"] error:&error];
+            if (error) {
+                [self cdvErrorWithMessage:[error description]];
+            } else {
+                [self setFormFieldsResult];
             }
-            [self setFormFieldsResult];
+        } @finally {
+            [m_pdf PDFClose];
         }
-    } else
-    {
+        
+    } else {
         [self cdvErrorWithMessage:@"JSON not found"];
     }
 }
@@ -976,105 +979,85 @@
 
 - (void)willShowReader
 {
-    /*
-    if (_delegate) {
-        [_delegate willShowReader];
+    if (self.cdv_willShowReader != nil) {
+        [self cdvSendCallback:@"" orCommand:self.cdv_willShowReader];
     }
-    */
-    
-    [self cdvSendCallback:@"" orCommand:self.cdv_willShowReader];
 }
 
 - (void)didShowReader
 {
-    /*
-    if (_delegate) {
-        [_delegate didShowReader];
+    if (self.cdv_didShowReader != nil) {
+        [self cdvSendCallback:@"" orCommand:self.cdv_didShowReader];
     }
-    */
-    
-    [self cdvSendCallback:@"" orCommand:self.cdv_didShowReader];
 }
 
 - (void)willCloseReader
 {
-    /*
-    if (_delegate) {
-        [_delegate willCloseReader];
+    if (self.cdv_willCloseReader != nil) {
+        [self cdvSendCallback:@"" orCommand:self.cdv_willCloseReader];
     }
-    */
-    
-    [self cdvSendCallback:@"" orCommand:self.cdv_willCloseReader];
 }
 
 - (void)didCloseReader
 {
-    /*
-    if (_delegate) {
-        [_delegate didCloseReader];
+    if (self.callbackId != nil) {
+        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"closed"];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
+        self.callbackId = nil;
     }
-    */
-    
-    [self cdvSendCallback:@"" orCommand:self.cdv_didCloseReader];
+
+    if (self.cdv_didCloseReader != nil) {
+        [self cdvSendCallback:@"" orCommand:self.cdv_didCloseReader];
+    }
 }
 
 - (void)didChangePage:(int)page
 {
-    /*
-    if (_delegate) {
-        [_delegate didChangePage:page];
+    if (self.cdv_didChangePage != nil) {
+        [self cdvSendCallback:[NSString stringWithFormat:@"%i", page] orCommand:self.cdv_didChangePage];
     }
-    */
-    
-    [self cdvSendCallback:[NSString stringWithFormat:@"%i", page] orCommand:self.cdv_didChangePage];
 }
 
 - (void)didSearchTerm:(NSString *)term found:(BOOL)found
 {
-    /*
-    if (_delegate) {
-        [_delegate didSearchTerm:term found:found];
+    if (self.cdv_didSearchTerm != nil) {
+        [self cdvSendCallback:term orCommand:self.cdv_didSearchTerm];
     }
-    */
-    
-    [self cdvSendCallback:term orCommand:self.cdv_didSearchTerm];
 }
 
 - (void)didTapOnPage:(int)page atPoint:(CGPoint)point
 {
-    /*
-    if (_delegate) {
-        [_delegate didTapOnPage:page atPoint:point];
+    if (self.cdv_didTapOnPage != nil) {
+        [self cdvSendCallback:[NSString stringWithFormat:@"%i", page] orCommand:self.cdv_didTapOnPage];
     }
-    */
-    
-    [self cdvSendCallback:[NSString stringWithFormat:@"%i", page] orCommand:self.cdv_didTapOnPage];
 }
 
 - (void)didDoubleTapOnPage:(int)page atPoint:(CGPoint)point
 {
-    [self cdvSendCallback:[NSString stringWithFormat:@"%i", page] orCommand:self.cdv_didDoubleTapOnPage];
+    if (self.cdv_didDoubleTapOnPage != nil) {
+        [self cdvSendCallback:[NSString stringWithFormat:@"%i", page] orCommand:self.cdv_didDoubleTapOnPage];
+    }
 }
 
 - (void)didLongPressOnPage:(int)page atPoint:(CGPoint)point
 {
-    [self cdvSendCallback:[NSString stringWithFormat:@"%i", page] orCommand:self.cdv_didLongPressOnPage];
+    if (self.cdv_didLongPressOnPage != nil) {
+        [self cdvSendCallback:[NSString stringWithFormat:@"%i", page] orCommand:self.cdv_didLongPressOnPage];
+    }
 }
 
 - (void)didTapOnAnnotationOfType:(int)type atPage:(int)page atPoint:(CGPoint)point
 {
-    /*
-    if (_delegate) {
-        [_delegate didTapOnAnnotationOfType:type atPage:page atPoint:point];
+    if (self.cdv_didTapOnAnnotationOfType != nil) {
+        [self cdvSendCallback:[NSString stringWithFormat:@"%i", type] orCommand:self.cdv_didTapOnAnnotationOfType];
     }
-    */
-    
-    [self cdvSendCallback:[NSString stringWithFormat:@"%i", type] orCommand:self.cdv_didTapOnAnnotationOfType];
 }
 
 - (void)onAnnotExported:(NSString *)path
 {
-    [self cdvSendCallback:path orCommand:self.cdv_onAnnotExported];
+    if (self.cdv_onAnnotExported != nil) {
+        [self cdvSendCallback:path orCommand:self.cdv_onAnnotExported];
+    }
 }
 
 #pragma mark - Path Utils
