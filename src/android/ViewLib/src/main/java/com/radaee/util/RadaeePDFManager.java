@@ -17,6 +17,8 @@ import com.radaee.pdf.Page.Annotation;
 
 import java.io.File;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -253,6 +255,65 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
     }
 
     /**
+     * Returns a json object that contains all the document form fields dictionary without opening PDFView
+     *
+     * @return json object of all the document form fields dictionary (if-any), or ERROR otherwise
+     */
+    public String getJsonFormFieldsFromFile(String url) {
+        Document document = null;
+        String prefix = "file://";
+        String pdfPath = url.substring(url.indexOf(prefix) + prefix.length());
+        JSONObject mPageJson = new JSONObject();
+        try {
+            document = new Document();
+            int res = document.Open(pdfPath, null);
+            if (res < 0) {
+                return null;
+            }
+            JSONArray mPages = new JSONArray();
+            for (int i = 0 ; i < document.GetPageCount() ; i++) {
+                Page mPage = document.GetPage(i);
+                if(mPage != null) {
+                    mPage.ObjsStart();
+                    JSONArray mPagesAnnot = new JSONArray();
+                    for(int j = 0 ; j < mPage.GetAnnotCount() ; j++) {
+                        Page.Annotation mAnnotation = mPage.GetAnnot(j);
+                        if(mAnnotation != null && (mAnnotation.GetType() == 20 || mAnnotation.GetType() == 3)) {
+                            JSONObject mAnnotInfoJson = new JSONObject();
+
+                            mAnnotInfoJson.put("Index", mAnnotation.GetIndexInPage());
+                            mAnnotInfoJson.put("Type", mAnnotation.GetType());
+                            mAnnotInfoJson.put("FieldType", mAnnotation.GetFieldType());
+                            mAnnotInfoJson.put("EditText", mAnnotation.GetEditText());
+                            mPagesAnnot.put(mAnnotInfoJson);
+                        }
+                    }
+                    if(mPagesAnnot.length() > 0) {
+                        JSONObject mPageAnnotJson = new JSONObject();
+                        mPageAnnotJson.put("Page", i);
+                        mPageAnnotJson.put("Annots", mPagesAnnot);
+                        mPages.put(mPageAnnotJson);
+                    }
+                }
+            }
+            if(mPages.length() > 0) {
+                mPageJson.put("Pages", mPages);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        } finally {
+            if (document != null) {
+                document.Close();
+            }
+        }
+        if(mPageJson.length() > 0) {
+            return mPageJson.toString();
+        } else {
+            return RadaeePluginCallback.getInstance().onGetJsonFormFields();
+        }
+    }
+
+    /**
      * Returns a json object that contains a specific page's form fields dictionary
      *
      * @param pageno the page number, 0-index (from 0 to Document.GetPageCount - 1)
@@ -267,34 +328,30 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
      * combo, radio buttons.
      *
      * @param url form url
-     * @param codes smart fields code
+     * @param pages smart fields json
      */
-    public String setFormFieldsWithJSON(String url, JSONObject codes) {
+    public String setFormFieldsWithJSON(String url, String pages) {
         Document document = null;
         String prefix = "file://";
         String pdfPath = url.substring(url.indexOf(prefix) + prefix.length());
+        String result = null;
         try {
             document = new Document();
             int res = document.Open(pdfPath, null);
             if (res < 0) {
                 return null;
             }
-            int pageCount = document.GetPageCount();
-            for (int i = 0; i < pageCount; i++) {
-                Page page = document.GetPage(i);
-                page.ObjsStart();
-                int annotCount = page.GetAnnotCount();
-                for (int j = 0; j < annotCount; j++) {
-                    Annotation annotation = page.GetAnnot(j);
-                    String annotationText = annotation.GetEditText();
-                    String replacement = codes.optString(annotationText);
-                    if (replacement.equals("null")) {
-                        replacement = "";
-                    }
-                    if (!Strings.isNullOrEmpty(annotationText)) {
-                        annotation.SetEditText(replacement);
+            try {
+                JSONObject pagesJson = new JSONObject(pages);
+                if (pagesJson.optJSONArray("Pages") != null) {
+                    JSONArray pagesArray = pagesJson.optJSONArray("Pages");
+                    for(int i = 0 ; i < pagesArray.length() ; i++) {
+                        CommonUtil.parsePageJsonFormFields(pagesArray.getJSONObject(i), document);
+                        result = "Property set successfully";
                     }
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         } finally {
             if (document != null) {
@@ -302,7 +359,7 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
                 document.Close();
             }
         }
-        return url;
+        return result;
     }
 
     /**

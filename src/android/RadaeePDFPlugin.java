@@ -155,16 +155,23 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
                 callbackContext.success("Current page Number = " + mPdfManager.getPageNumber());
                 break;
             case "JSONFormFields":  //get file's form fields values in json format
-                callbackContext.success("JSONFormFields = " + mPdfManager.getJsonFormFields());
+                params = args.getJSONObject(0);
+                String pages = mPdfManager.getJsonFormFieldsFromFile(params.optString("url"));
+                if (Strings.isNullOrEmpty(pages)) {
+                    callbackContext.error("JSON property get failed");
+                } else {
+                    callbackContext.success(pages);
+                }
                 break;
             case "JSONFormFieldsAtPage":  //get file's form fields values for given page in json format
                 callbackContext.success("JSONFormFields = " +
                         mPdfManager.getJsonFormFieldsAtPage(args.getJSONObject(0).optInt("page")));
                 break;
+
             case "setFormFieldWithJSON":  //Set form fields' values
                 params = args.getJSONObject(0);
-                String url = mPdfManager.setFormFieldsWithJSON(params.optString("url"), params.getJSONObject("codes"));
-                if (Strings.isNullOrEmpty(url)) {
+                String res = mPdfManager.setFormFieldsWithJSON(params.optString("url"), params.optString("pages"));
+                if (Strings.isNullOrEmpty(res)) {
                     callbackContext.error("JSON property set failed");
                 } else {
                     callbackContext.success("JSON property set successfully");
