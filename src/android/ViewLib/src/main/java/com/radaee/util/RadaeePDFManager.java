@@ -273,30 +273,11 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
             JSONArray mPages = new JSONArray();
             for (int i = 0 ; i < document.GetPageCount() ; i++) {
                 Page mPage = document.GetPage(i);
-                if(mPage != null) {
-                    mPage.ObjsStart();
-                    JSONArray mPagesAnnot = new JSONArray();
-                    for(int j = 0 ; j < mPage.GetAnnotCount() ; j++) {
-                        Page.Annotation mAnnotation = mPage.GetAnnot(j);
-                        if(mAnnotation != null && (mAnnotation.GetType() == 20 || mAnnotation.GetType() == 3)) {
-                            JSONObject mAnnotInfoJson = new JSONObject();
-
-                            mAnnotInfoJson.put("Index", mAnnotation.GetIndexInPage());
-                            mAnnotInfoJson.put("Type", mAnnotation.GetType());
-                            mAnnotInfoJson.put("FieldType", mAnnotation.GetFieldType());
-                            mAnnotInfoJson.put("EditText", mAnnotation.GetEditText());
-                            mPagesAnnot.put(mAnnotInfoJson);
-                        }
-                    }
-                    if(mPagesAnnot.length() > 0) {
-                        JSONObject mPageAnnotJson = new JSONObject();
-                        mPageAnnotJson.put("Page", i);
-                        mPageAnnotJson.put("Annots", mPagesAnnot);
-                        mPages.put(mPageAnnotJson);
-                    }
-                }
+                JSONObject mResult = CommonUtil.constructPageJsonFormFields(mPage, i, true);
+                if (mResult != null)
+                    mPages.put(mResult);
             }
-            if(mPages.length() > 0) {
+            if (mPages.length() > 0) {
                 mPageJson.put("Pages", mPages);
             }
         } catch (JSONException e) {
@@ -306,7 +287,7 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
                 document.Close();
             }
         }
-        if(mPageJson.length() > 0) {
+        if (mPageJson.length() > 0) {
             return mPageJson.toString();
         } else {
             return RadaeePluginCallback.getInstance().onGetJsonFormFields();
@@ -345,10 +326,10 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
                 JSONObject pagesJson = new JSONObject(pages);
                 if (pagesJson.optJSONArray("Pages") != null) {
                     JSONArray pagesArray = pagesJson.optJSONArray("Pages");
-                    for(int i = 0 ; i < pagesArray.length() ; i++) {
+                    for (int i = 0 ; i < pagesArray.length() ; i++) {
                         CommonUtil.parsePageJsonFormFields(pagesArray.getJSONObject(i), document);
-                        result = "Property set successfully";
                     }
+                    result = "Property set successfully";
                 }
             } catch (Exception e) {
                 e.printStackTrace();

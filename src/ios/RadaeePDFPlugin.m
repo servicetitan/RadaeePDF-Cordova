@@ -866,10 +866,27 @@
 - (void)JSONFormFields:(CDVInvokedUrlCommand *)command
 {
     self.cdv_command = command;
+    NSDictionary *params = (NSDictionary*) [cdv_command argumentAtIndex:0];
     
-    RDFormManager *fe = [[RDFormManager alloc] initWithDoc:[m_pdf getDoc]];
-    
-    [self cdvOkWithMessage:[fe jsonInfoForAllPages]];
+    if ([params objectForKey:@"url"]) {
+        NSString *prefix = @"file://";
+        NSString *url = [[params objectForKey:@"url"] substringFromIndex:[prefix length]];
+        RDFormManager *fe = [[RDFormManager alloc] init];
+        [self readerInit];
+        @try {
+            [m_pdf PDFOpen:url :NULL atPage:0 readOnly:true autoSave:false];
+            NSString *result = [fe jsonInfoForAllPages:[m_pdf getDoc]];
+            if (!result) {
+                [self cdvErrorWithMessage:@"JSON property get failed"];
+            } else {
+                [self cdvOkWithMessage:result];
+            }
+        } @finally {
+            [m_pdf PDFClose];
+        }
+    } else {
+        [self cdvErrorWithMessage:@"Document not found"];
+    }
 }
 
 - (void)JSONFormFieldsAtPage:(CDVInvokedUrlCommand *)command
@@ -886,16 +903,16 @@
 {
     self.cdv_command = command;
     NSDictionary *params = (NSDictionary*) [cdv_command argumentAtIndex:0];
-    
     NSError *error;
-    if ([params objectForKey:@"url"] && [params objectForKey:@"codes"]) {
+    
+    if ([params objectForKey:@"url"] && [params objectForKey:@"pages"]) {
         NSString *prefix = @"file://";
         NSString *url = [[params objectForKey:@"url"] substringFromIndex:[prefix length]];
         RDFormManager *fe = [[RDFormManager alloc] init];
         [self readerInit];
         @try {
             [m_pdf PDFOpen:url :NULL atPage:0 readOnly:false autoSave:true];
-            [fe setInfoWithJson:[m_pdf getDoc] codes:[params objectForKey:@"codes"] error:&error];
+            [fe setInfoWithJson:[m_pdf getDoc] dict:[params objectForKey:@"pages"] error:&error];
             if (error) {
                 [self cdvErrorWithMessage:[error description]];
             } else {
@@ -904,7 +921,6 @@
         } @finally {
             [m_pdf PDFClose];
         }
-        
     } else {
         [self cdvErrorWithMessage:@"JSON not found"];
     }
