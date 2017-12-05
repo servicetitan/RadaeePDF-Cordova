@@ -15,10 +15,10 @@
 - (instancetype)initWithDoc:(id)doc;
 
 //Getter
-- (NSString *)jsonInfoForAllPages;
+- (NSString *)jsonInfoForAllPages:(PDFDoc *)document;
 - (NSString *)jsonInfoForPage:(int)page;
 
 //Setter
-- (void)setInfoWithJson:(PDFDoc *)document codes:(NSDictionary *)codes error:(NSError **)error;
+- (void)setInfoWithJson:(PDFDoc *)document dict:(NSString *)dict error:(NSError **)error;
 
 @end
