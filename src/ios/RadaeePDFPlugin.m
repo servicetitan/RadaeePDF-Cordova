@@ -13,8 +13,8 @@
 #pragma mark - Synthesize
 
 @interface RadaeePDFPlugin() <RDPDFViewControllerDelegate>
-    @property (nonatomic) NSString* callbackId;
-    @end
+@property (nonatomic) NSString* callbackId;
+@end
 
 @implementation RadaeePDFPlugin
 @synthesize cdv_command;
@@ -904,15 +904,15 @@
     self.cdv_command = command;
     NSDictionary *params = (NSDictionary*) [cdv_command argumentAtIndex:0];
     NSError *error;
-    
-    if ([params objectForKey:@"url"] && [params objectForKey:@"pages"]) {
+
+    if ([params objectForKey:@"url"] && [params objectForKey:@"codes"]) {
         NSString *prefix = @"file://";
         NSString *url = [[params objectForKey:@"url"] substringFromIndex:[prefix length]];
         RDFormManager *fe = [[RDFormManager alloc] init];
         [self readerInit];
         @try {
             [m_pdf PDFOpen:url :NULL atPage:0 readOnly:false autoSave:true];
-            [fe setInfoWithJson:[m_pdf getDoc] dict:[params objectForKey:@"pages"] error:&error];
+            [fe setInfoWithJson:[m_pdf getDoc] codes:[params objectForKey:@"codes"] error:&error];
             if (error) {
                 [self cdvErrorWithMessage:[error description]];
             } else {
