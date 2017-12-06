@@ -35,27 +35,32 @@
 #pragma mark - Set Info
 
 //Set fields with JSON string
-- (void)setInfoWithJson:(PDFDoc *)document dict:(NSDictionary *)dict error:(NSError **)error
+- (void)setInfoWithJson:(PDFDoc *)document codes:(NSDictionary *)codes error:(NSError **)error
 {
     if (![document canSave]) {
         *error = [NSError errorWithDomain:[[[NSBundle mainBundle] bundleIdentifier] stringByAppendingString:@".ErrorDomain"] code:101 userInfo:@{@"readonly-document": @"The PDFDoc instance is readonly"}];
         return;
     }
-
-    if ([dict objectForKey:@"Pages"]) {
-        NSArray *pages = [dict objectForKey:@"Pages"];
-        
-        for (NSDictionary *pageDict in pages) {
-            [self parsePage:document page:pageDict error:error];
+    int pageCount = document.pageCount;
+    for (int i = 0; i < pageCount; i++) {
+        PDFPage *page = [document page:i];
+        [page objsStart];
+        int annotCount = [page annotCount];
+        for (int j = 0; j < annotCount; j++) {
+            PDFAnnot *annotation = [page annotAtIndex:j];
+            NSString *code = [annotation getEditText];
+            NSString *replacement = [codes objectForKey:code];
+            if (replacement) {
+                [annotation setEditText:replacement];
+            }
         }
-    } else {
-        *error = [NSError errorWithDomain:[[[NSBundle mainBundle] bundleIdentifier] stringByAppendingString:@".ErrorDomain"] code:102 userInfo:@{@"pages-attribute": @"\"Pages\" attribute is missing"}];
+        page = nil;
     }
     [document save];
 }
 
 //Parse Page Dictionary
-- (void)parsePage:(PDFDoc *)document page:(NSDictionary *)page error:(NSError **)error
+- (void)parsePage:(NSDictionary *)page error:(NSError **)error
 {
     if ([page objectForKey:@"Page"]) {
         int index = [[page objectForKey:@"Page"] intValue];
@@ -63,7 +68,7 @@
         if ([page objectForKey:@"Annots"]) {
             NSArray *annots = [page objectForKey:@"Annots"];
             
-            PDFPage *pdfPage = [document page:index];
+            PDFPage *pdfPage = [currentDoc page:index];
             [pdfPage objsStart];
             
             for (NSDictionary *annot in annots) {
@@ -243,7 +248,7 @@
     //Check if the page index exist
     if (page >= 0 && page <= pageCount) {
         PDFPage *docPage = [currentDoc page:page];
-        NSDictionary *dict = [self infoForPage:docPage number:page getEditTextOnly:false];
+        NSDictionary *dict = [self infoForPage:docPage number:page];
         
         NSString *jsonString = [self jsonStringFromDict:dict];
         
@@ -261,37 +266,41 @@
         return @"Document not set";
     }
     
-    NSDictionary *dict = [self infoForAllPages:document getEditTextOnly:true];
-    return [self jsonStringFromDict:dict];
+    NSSet *set = [self allFormFields:document];
+    return [[set allObjects] componentsJoinedByString:@","];
 }
 
 //Get annotations info for all pages
-- (NSDictionary *)infoForAllPages:(PDFDoc *)document getEditTextOnly:(Boolean)getEditTextOnly
+- (NSSet *)allFormFields:(PDFDoc *)document
 {
-    NSMutableArray *arr = [NSMutableArray array];
-    
+    NSMutableSet *set = [NSMutableSet set];
+    int TEXT_FIELD = 3, WIDGET = 20;
     int pageCount = [document pageCount];
-    
     for (int i = 0; i < pageCount; i++) {
         PDFPage *page = [document page:i];
         [page objsStart];
         if ([page annotCount] > 0) {
-            [arr addObject:[self infoForPage:page number:i getEditTextOnly:getEditTextOnly]];
+            int annotCount = [page annotCount];
+            for (int j = 0; j < annotCount; j++) {
+                PDFAnnot *annotation = [page annotAtIndex:j];
+                if (annotation && ([annotation type] == TEXT_FIELD || [annotation type] == WIDGET)) {
+                    [set addObject:[annotation getEditText]];
+                }
+            }
         }
     }
-    
-    return @{@"Pages" : arr};
+    return set;
 }
 
 //Get annotations info for a single page
-- (NSDictionary *)infoForPage:(PDFPage *)page number:(int)pageNumber getEditTextOnly:(Boolean)getEditTextOnly
+- (NSDictionary *)infoForPage:(PDFPage *)page number:(int)pageNumber
 {
     NSMutableArray *arr = [NSMutableArray array];
     
     int annotCount = [page annotCount];
     
     for (int i = 0; i < annotCount; i++) {
-        NSDictionary *element = [self infoForAnnot:[page annotAtIndex:i] getEditTextOnly:getEditTextOnly];
+        NSDictionary *element = [self infoForAnnot:[page annotAtIndex:i]];
         
         if (element) {
             [arr addObject:element];
@@ -302,47 +311,39 @@
 }
 
 //Create the single annotation info dictionary
-- (NSDictionary *)infoForAnnot:(PDFAnnot *)annot getEditTextOnly:(Boolean)getEditTextOnly
+- (NSDictionary *)infoForAnnot:(PDFAnnot *)annot
 {
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     
     if ([self canStoreAnnot:annot]) {
         @try {
-            if (getEditTextOnly) {
-                [dict setObject:[self valueForField:[NSNumber numberWithInt:[annot getIndex]]] forKey:@"Index"];
-                [dict setObject:[self valueForField:[NSNumber numberWithInt:[annot type]]] forKey:@"Type"];
-                [dict setObject:[self valueForField:[NSNumber numberWithInt:[annot fieldType]]] forKey:@"FieldType"];
-                [dict setObject:[self valueForField:[annot getEditText]] forKey:@"EditText"];
-            } else {
-                [dict setObject:[self valueForField:[NSNumber numberWithInt:[annot getIndex]]] forKey:@"Index"];
-                [dict setObject:[self valueForField:[NSNumber numberWithInt:[annot type]]] forKey:@"Type"];
-                [dict setObject:[self valueForField:[annot fieldName]] forKey:@"FieldName"];
-                [dict setObject:[self valueForField:[annot fieldNameWithNO]] forKey:@"FieldNameWithNO"];
-                [dict setObject:[self valueForField:[annot fieldFullName]] forKey:@"FieldFullName"];
-                [dict setObject:[self valueForField:[annot fieldFullName2]] forKey:@"FieldFullName2"];
-                [dict setObject:[self valueForField:[NSNumber numberWithInt:[annot fieldType]]] forKey:@"FieldType"];
-                [dict setObject:[self valueForField:[annot getPopupLabel]] forKey:@"PopupLabel"];
-                [dict setObject:[self valueForField:[NSNumber numberWithInt:[annot getCheckStatus]]] forKey:@"CheckStatus"];
-                [dict setObject:[self valueForField:[NSNumber numberWithInt:[annot getComboSel]]] forKey:@"ComboItemSel"];
-                [dict setObject:[self valueForField:[NSNumber numberWithInt:[annot getComboItemCount]]] forKey:@"ComboItemCount"];
+            [dict setObject:[self valueForField:[NSNumber numberWithInt:[annot getIndex]]] forKey:@"Index"];
+            [dict setObject:[self valueForField:[NSNumber numberWithInt:[annot type]]] forKey:@"Type"];
+            [dict setObject:[self valueForField:[annot fieldName]] forKey:@"FieldName"];
+            [dict setObject:[self valueForField:[annot fieldNameWithNO]] forKey:@"FieldNameWithNO"];
+            [dict setObject:[self valueForField:[annot fieldFullName]] forKey:@"FieldFullName"];
+            [dict setObject:[self valueForField:[annot fieldFullName2]] forKey:@"FieldFullName2"];
+            [dict setObject:[self valueForField:[NSNumber numberWithInt:[annot fieldType]]] forKey:@"FieldType"];
+            [dict setObject:[self valueForField:[annot getPopupLabel]] forKey:@"PopupLabel"];
+            [dict setObject:[self valueForField:[NSNumber numberWithInt:[annot getCheckStatus]]] forKey:@"CheckStatus"];
+            [dict setObject:[self valueForField:[NSNumber numberWithInt:[annot getComboSel]]] forKey:@"ComboItemSel"];
+            [dict setObject:[self valueForField:[NSNumber numberWithInt:[annot getComboItemCount]]] forKey:@"ComboItemCount"];
+            
+            /*
+            int count = [annot getListItemCount];
+            if (count > 0) {
+                int *sels = (int *)calloc( sizeof(int), [annot getListItemCount]);
+                int res = [annot getListSels:sels :count];
                 
-                /*
-                 int count = [annot getListItemCount];
-                 if (count > 0) {
-                 int *sels = (int *)calloc( sizeof(int), [annot getListItemCount]);
-                 int res = [annot getListSels:sels :count];
-                 
-                 
-                 }
-                 */
-                
-                //[dict setObject:[self valueForField:[NSNumber numberWithInt:[annot getListSels:sels :count]]] forKey:@"ListSels"];
-                [dict setObject:[self valueForField:[NSNumber numberWithInt:[annot getListItemCount]]] forKey:@"ListItemCount"];
-                [dict setObject:[self valueForField:[NSNumber numberWithInt:[annot getEditType]]] forKey:@"EditType"];
-                [dict setObject:[self valueForField:[NSNumber numberWithInt:[annot getSignStatus]]] forKey:@"SignStatus"];
-                [dict setObject:[self valueForField:[annot getEditText]] forKey:@"EditText"];
-            }
 
+            }
+            */
+            
+            //[dict setObject:[self valueForField:[NSNumber numberWithInt:[annot getListSels:sels :count]]] forKey:@"ListSels"];
+            [dict setObject:[self valueForField:[NSNumber numberWithInt:[annot getListItemCount]]] forKey:@"ListItemCount"];
+            [dict setObject:[self valueForField:[NSNumber numberWithInt:[annot getEditType]]] forKey:@"EditType"];
+            [dict setObject:[self valueForField:[NSNumber numberWithInt:[annot getSignStatus]]] forKey:@"SignStatus"];
+            [dict setObject:[self valueForField:[annot getEditText]] forKey:@"EditText"];
         } @catch (NSException *exception) {
             dict = nil;
         }

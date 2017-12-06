@@ -156,11 +156,11 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
                 break;
             case "JSONFormFields":  //get file's form fields values in json format
                 params = args.getJSONObject(0);
-                String pages = mPdfManager.getJsonFormFieldsFromFile(params.optString("url"));
-                if (Strings.isNullOrEmpty(pages)) {
+                String fields = mPdfManager.getJsonFormFieldsFromFile(params.optString("url"));
+                if (Strings.isNullOrEmpty(fields)) {
                     callbackContext.error("JSON property get failed");
                 } else {
-                    callbackContext.success(pages);
+                    callbackContext.success(fields);
                 }
                 break;
             case "JSONFormFieldsAtPage":  //get file's form fields values for given page in json format
@@ -170,7 +170,7 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
 
             case "setFormFieldWithJSON":  //Set form fields' values
                 params = args.getJSONObject(0);
-                String res = mPdfManager.setFormFieldsWithJSON(params.optString("url"), params.optString("pages"));
+                String res = mPdfManager.setFormFieldsWithJSON(params.optString("url"), params.getJSONObject("codes"));
                 if (Strings.isNullOrEmpty(res)) {
                     callbackContext.error("JSON property set failed");
                 } else {

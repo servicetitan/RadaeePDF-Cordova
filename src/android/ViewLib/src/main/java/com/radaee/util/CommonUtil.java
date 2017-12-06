@@ -137,7 +137,7 @@ public class CommonUtil {
         return null;
     }
 
-    public static JSONObject constructPageJsonFormFields(Page mPage, int index, boolean getEditTextOnly) {
+    public static JSONObject constructPageJsonFormFields(Page mPage, int index) {
         try {
             if (mPage != null) {
                 mPage.ObjsStart();
@@ -147,58 +147,50 @@ public class CommonUtil {
                     if (mAnnotation != null && (mAnnotation.GetType() == 20 || mAnnotation.GetType() == 3)) {
                         JSONObject mAnnotInfoJson = new JSONObject();
 
-                        if (getEditTextOnly) {
-                            mAnnotInfoJson.put("Index", mAnnotation.GetIndexInPage());
-                            mAnnotInfoJson.put("Type", mAnnotation.GetType());
-                            mAnnotInfoJson.put("FieldType", mAnnotation.GetFieldType());
-                            mAnnotInfoJson.put("EditText", mAnnotation.GetEditText());
-                        } else {
-                            mAnnotInfoJson.put("Index", mAnnotation.GetIndexInPage());
-                            mAnnotInfoJson.put("Name", mAnnotation.GetName());
-                            mAnnotInfoJson.put("Type", mAnnotation.GetType());
+                        mAnnotInfoJson.put("Index", mAnnotation.GetIndexInPage());
+                        mAnnotInfoJson.put("Name", mAnnotation.GetName());
+                        mAnnotInfoJson.put("Type", mAnnotation.GetType());
 
-                            mAnnotInfoJson.put("FieldName", mAnnotation.GetFieldName());
-                            mAnnotInfoJson.put("FieldNameWithNO", mAnnotation.GetFieldNameWithNO());
-                            mAnnotInfoJson.put("FieldFullName", mAnnotation.GetFieldFullName());
-                            mAnnotInfoJson.put("FieldFullName2", mAnnotation.GetFieldFullName2());
-                            mAnnotInfoJson.put("FieldFlag", mAnnotation.GetFieldFlag());
-                            mAnnotInfoJson.put("FieldFormat", mAnnotation.GetFieldFormat());
-                            mAnnotInfoJson.put("FieldType", mAnnotation.GetFieldType());
+                        mAnnotInfoJson.put("FieldName", mAnnotation.GetFieldName());
+                        mAnnotInfoJson.put("FieldNameWithNO", mAnnotation.GetFieldNameWithNO());
+                        mAnnotInfoJson.put("FieldFullName", mAnnotation.GetFieldFullName());
+                        mAnnotInfoJson.put("FieldFullName2", mAnnotation.GetFieldFullName2());
+                        mAnnotInfoJson.put("FieldFlag", mAnnotation.GetFieldFlag());
+                        mAnnotInfoJson.put("FieldFormat", mAnnotation.GetFieldFormat());
+                        mAnnotInfoJson.put("FieldType", mAnnotation.GetFieldType());
 
-                            mAnnotInfoJson.put("PopupLabel", mAnnotation.GetPopupLabel());
+                        mAnnotInfoJson.put("PopupLabel", mAnnotation.GetPopupLabel());
 
-                            mAnnotInfoJson.put("CheckStatus", mAnnotation.GetCheckStatus());
+                        mAnnotInfoJson.put("CheckStatus", mAnnotation.GetCheckStatus());
 
-                            mAnnotInfoJson.put("ComboItemSel", mAnnotation.GetComboItemSel());
-                            mAnnotInfoJson.put("ComboItemSelItem", mAnnotation.GetComboItemSel() == -1 ? mAnnotation.GetComboItemSel() :
-                                    mAnnotation.GetComboItem(mAnnotation.GetComboItemSel()));
-                            mAnnotInfoJson.put("ComboItemCount", mAnnotation.GetComboItemCount());
+                        mAnnotInfoJson.put("ComboItemSel", mAnnotation.GetComboItemSel());
+                        mAnnotInfoJson.put("ComboItemSelItem", mAnnotation.GetComboItemSel() == -1 ? mAnnotation.GetComboItemSel() :
+                                mAnnotation.GetComboItem(mAnnotation.GetComboItemSel()));
+                        mAnnotInfoJson.put("ComboItemCount", mAnnotation.GetComboItemCount());
 
-                            if (mAnnotation.GetListSels() != null) {
-                                int[] items = mAnnotation.GetListSels();
-                                if (items.length == 0)
-                                    mAnnotInfoJson.put("ListSels", "");
-                                else {
-                                    String selValues = "";
-                                    for (int item : items)
-                                        selValues += mAnnotation.GetListItem(item) + ", ";
-                                    mAnnotInfoJson.put("ListSels", Arrays.toString(items));
-                                    mAnnotInfoJson.put("ListSelsItems", selValues.substring(0, selValues.lastIndexOf(",")));
-                                }
+                        if (mAnnotation.GetListSels() != null) {
+                            int[] items = mAnnotation.GetListSels();
+                            if (items.length == 0)
+                                mAnnotInfoJson.put("ListSels", "");
+                            else {
+                                String selValues = "";
+                                for(int item : items)
+                                    selValues += mAnnotation.GetListItem(item) + ", ";
+                                mAnnotInfoJson.put("ListSels", Arrays.toString(items));
+                                mAnnotInfoJson.put("ListSelsItems", selValues.substring(0, selValues.lastIndexOf(",")));
                             }
-                            mAnnotInfoJson.put("ListItemCount", mAnnotation.GetListItemCount());
-
-                            mAnnotInfoJson.put("EditText", mAnnotation.GetEditText());
-                            mAnnotInfoJson.put("EditType", mAnnotation.GetEditType());
-                            mAnnotInfoJson.put("EditTextFormat", mAnnotation.GetFieldFormat());
-
-                            mAnnotInfoJson.put("SignStatus", mAnnotation.GetSignStatus());
                         }
+                        mAnnotInfoJson.put("ListItemCount", mAnnotation.GetListItemCount());
+
+                        mAnnotInfoJson.put("EditText", mAnnotation.GetEditText());
+                        mAnnotInfoJson.put("EditType", mAnnotation.GetEditType());
+                        mAnnotInfoJson.put("EditTextFormat", mAnnotation.GetFieldFormat());
+
+                        mAnnotInfoJson.put("SignStatus", mAnnotation.GetSignStatus());
 
                         mPagesAnnot.put(mAnnotInfoJson);
                     }
                 }
-
                 if (mPagesAnnot.length() > 0) {
                     JSONObject mPageJson = new JSONObject();
                     mPageJson.put("Page", index);
