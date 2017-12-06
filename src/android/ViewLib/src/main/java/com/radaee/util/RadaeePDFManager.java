@@ -276,7 +276,7 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
                     mPage.ObjsStart();
                     for (int j = 0; j < mPage.GetAnnotCount(); j++) {
                         Page.Annotation mAnnotation = mPage.GetAnnot(j);
-                        if (mAnnotation != null && (mAnnotation.GetType() == WIDGET || mAnnotation.GetType() == TEXT_FIELD)) {
+                        if (mAnnotation != null  && mAnnotation.GetEditText() != null && (mAnnotation.GetType() == WIDGET || mAnnotation.GetType() == TEXT_FIELD)) {
                             formFields.add(mAnnotation.GetEditText());
                         }
                     }

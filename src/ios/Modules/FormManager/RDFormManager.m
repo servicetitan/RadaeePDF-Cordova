@@ -285,7 +285,7 @@
             int annotCount = [page annotCount];
             for (int j = 0; j < annotCount; j++) {
                 PDFAnnot *annotation = [page annotAtIndex:j];
-                if (annotation && ([annotation type] == TEXT_FIELD || [annotation type] == WIDGET)) {
+                if (annotation && [annotation getEditText] && ([annotation type] == TEXT_FIELD || [annotation type] == WIDGET)) {
                     [set addObject:[annotation getEditText]];
                 }
             }
