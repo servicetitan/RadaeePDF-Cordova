@@ -6,8 +6,6 @@ import android.text.TextUtils;
 import android.webkit.URLUtil;
 import android.widget.Toast;
 
-import com.google.common.base.Strings;
-
 import com.radaee.pdf.Global;
 import com.radaee.pdf.Page;
 import com.radaee.reader.PDFViewAct;
@@ -18,7 +16,7 @@ import com.radaee.pdf.Page.Annotation;
 import java.io.File;
 import java.util.HashSet;
 
-import org.json.JSONArray;
+import com.google.gson.Gson;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -290,7 +288,8 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
             }
         }
         if (formFields.size() > 0) {
-            return formFields.toString();
+            Gson gson = new Gson();
+            return gson.toJson(formFields);
         } else {
             return RadaeePluginCallback.getInstance().onGetJsonFormFields();
         }
