@@ -267,7 +267,9 @@
     }
     
     NSSet *set = [self allFormFields:document];
-    return [[set allObjects] componentsJoinedByString:@","];
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:[set allObjects] options:NSJSONWritingPrettyPrinted error:nil];
+    NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+    return jsonString;
 }
 
 //Get annotations info for all pages
@@ -498,3 +500,4 @@
 }
 
 @end
+
