@@ -66,6 +66,7 @@
         NSLog(@"%d", result);
         if(result != err_ok && result != err_open){
             [self pdfChargeDidFailWithError:@"Error open pdf" andCode:(NSInteger) result];
+            return;
         }
         
         [self showReader];
@@ -134,6 +135,7 @@
     NSLog(@"%d", result);
     if(result != err_ok && result != err_open){
         [self pdfChargeDidFailWithError:@"Error open pdf" andCode:(NSInteger) result];
+        return;
     }
     
     [self showReader];
@@ -354,6 +356,9 @@
     [m_pdf setOutlineImage:[UIImage imageNamed:@"btn_outline.png"]];
     [m_pdf setPrintImage:[UIImage imageNamed:@"btn_print.png"]];
     [m_pdf setGridImage:[UIImage imageNamed:@"btn_grid.png"]];
+    [m_pdf setUndoImage:[UIImage imageNamed:@"btn_undo.png"]];
+    [m_pdf setRedoImage:[UIImage imageNamed:@"btn_redo.png"]];
+    [m_pdf setMoreImage:[UIImage imageNamed:@"btn_more.png"]];
     
     [m_pdf setRemoveImage:[UIImage imageNamed:@"annot_remove.png"]];
     
@@ -368,25 +373,23 @@
     [m_pdf setHideGridImage:YES];
     
     if (disableToolbar) {
-        [m_pdf setHideLineImage:YES];
-        [m_pdf setHideRectImage:YES];
-        [m_pdf setHidePrintImage:YES];
-        [m_pdf setHideSearchImage:YES];
-        [m_pdf setHideEllipseImage:YES];
-        [m_pdf setHideOutlineImage:YES];
-        [m_pdf setHideBookmarkImage:YES];
         [m_pdf setHideViewModeImage:YES];
-        [m_pdf setHideBookmarkListImage:YES];
+        [m_pdf setHideSearchImage:YES];
+        [m_pdf setHideDrawImage:YES];
+        [m_pdf setHideSelImage:YES];
+        [m_pdf setHideOutlineImage:YES];
+        [m_pdf setHideUndoImage:YES];
+        [m_pdf setHideRedoImage:YES];
+        [m_pdf setHideMoreImage:YES];
     } else {
-        [m_pdf setHideLineImage:NO];
-        [m_pdf setHideRectImage:NO];
-        [m_pdf setHidePrintImage:NO];
-        [m_pdf setHideSearchImage:NO];
-        [m_pdf setHideEllipseImage:NO];
-        [m_pdf setHideOutlineImage:NO];
-        [m_pdf setHideBookmarkImage:NO];
         [m_pdf setHideViewModeImage:NO];
-        [m_pdf setHideBookmarkListImage:NO];
+        [m_pdf setHideSearchImage:NO];
+        [m_pdf setHideDrawImage:NO];
+        [m_pdf setHideSelImage:NO];
+        [m_pdf setHideOutlineImage:NO];
+        [m_pdf setHideUndoImage:NO];
+        [m_pdf setHideRedoImage:NO];
+        [m_pdf setHideMoreImage:NO];
     }
     
     /*
@@ -439,10 +442,14 @@
     
     if (titleBackgroundColor != 0) {
         navController.navigationBar.barTintColor = UIColorFromRGB(titleBackgroundColor);
+    } else {
+        navController.navigationBar.barTintColor = [UIColor blackColor];
     }
     
     if (iconsBackgroundColor != 0) {
         navController.navigationBar.tintColor = UIColorFromRGB(iconsBackgroundColor);
+    } else {
+        navController.navigationBar.tintColor = [UIColor orangeColor];
     }
     
     [navController.navigationBar setTranslucent:NO];
@@ -504,6 +511,56 @@
     }
 }
 
+- (void)addAnnotAttachment:(CDVInvokedUrlCommand *)command
+{
+    self.cdv_command = command;
+    
+    NSDictionary *params = (NSDictionary*) [cdv_command argumentAtIndex:0];
+    
+    NSString *path = [params objectForKey:@"path"];
+    
+    PDFDoc *doc = [m_pdf getDoc];
+    
+    if (m_pdf == nil || doc == nil) {
+        [self cdvErrorWithMessage:@"Error in pdf instance"];
+        return;
+    }
+    
+    if([m_pdf addAttachmentFromPath:path])
+    {
+        [self cdvOkWithMessage:@"Success"];
+    } else {
+        [self cdvErrorWithMessage:@"Failure"];
+    }
+}
+
+- (void)renderAnnotToFile:(CDVInvokedUrlCommand *)command
+{
+    self.cdv_command = command;
+    
+    NSDictionary *params = (NSDictionary*) [cdv_command argumentAtIndex:0];
+    
+    int pageno = [[params objectForKey:@"page"] intValue];
+    int index = [[params objectForKey:@"annotIndex"] intValue];
+    NSString *path = [params objectForKey:@"renderPath"];
+    int width = [[params objectForKey:@"width"] intValue];
+    int height = [[params objectForKey:@"height"] intValue];
+    
+    PDFDoc *doc = [m_pdf getDoc];
+    
+    if (m_pdf == nil || doc == nil) {
+        [self cdvErrorWithMessage:@"Error in pdf instance"];
+        return;
+    }
+    
+    if([m_pdf saveImageFromAnnotAtIndex:index atPage:pageno savePath:path size:CGSizeMake(width, height)])
+    {
+        [self cdvOkWithMessage:@"Success"];
+    } else {
+        [self cdvErrorWithMessage:@"Failure"];
+    }
+}
+
 #pragma mark - Settings
 
 - (void)toggleThumbSeekBar:(int)mode
@@ -529,9 +586,7 @@
     
     int mode = [[params objectForKey:@"mode"] intValue];
     
-    if (mode > 0 && mode < 5) {
-        _viewMode = mode;
-    }
+    _viewMode = mode;
 }
 
 - (void)setToolbarEnabled:(CDVInvokedUrlCommand *)command
@@ -837,6 +892,13 @@
                                messageAsDictionary:dict]];
 }
 
+- (void)cdvSendDictCallback:(NSDictionary *)message orCommand:(CDVInvokedUrlCommand *)command
+{
+    CDVPluginResult *res = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:message];
+    [res setKeepCallbackAsBool:YES];
+    [self.commandDelegate sendPluginResult:res callbackId:[command callbackId]];
+}
+
 - (void)cdvSendCallback:(NSString *)message orCommand:(CDVInvokedUrlCommand *)command
 {
     CDVPluginResult *res = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:message];
@@ -1067,6 +1129,7 @@
     if (self.cdv_didTapOnAnnotationOfType != nil) {
         [self cdvSendCallback:[NSString stringWithFormat:@"%i", type] orCommand:self.cdv_didTapOnAnnotationOfType];
     }
+    [self cdvSendDictCallback:@{@"index": [NSNumber numberWithInt:page], @"type": [NSNumber numberWithInt:type]} orCommand:self.cdv_didTapOnAnnotationOfType];
 }
 
 - (void)onAnnotExported:(NSString *)path
