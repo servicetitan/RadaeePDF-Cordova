@@ -1486,10 +1486,12 @@ extern NSString *g_author;
     if( pos.pageno >= 0 )
     {
         PDFVPage *vpage = [m_view vGetPage:pos.pageno];
+        PDFPage *page = [vpage GetPage];
         [self setModified:[vpage SetSelMarkup:type :color] force:NO];
-        
+        [actionManger push:[[ASAdd alloc] initWithPage:pos.pageno page:page index:(page.annotCount - 1)]];        
         [m_view vRenderSync:pos.pageno];
         [self refresh];
+        
         return true;
     }
     [self refresh];
@@ -2574,7 +2576,7 @@ extern NSString *g_author;
     int height = (rect.bottom- rect.top) * m_scale;
     PDFDIB *dib = [[PDFDIB alloc] init:width : height];
     Global_setAnnotTransparency(0x00000000);
-    [m_annot render:dib withBackgroundColor:0xffffffff];
+    [m_annot render:dib :0xffffffff];
     Global_setAnnotTransparency(0x200040FF);
     
     UIImage *img = [UIImage imageWithCGImage:[dib image]];

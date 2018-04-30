@@ -61,6 +61,11 @@ bool b_outline;
 bool b_search_outline;
 extern uint g_oval_color;
 
+- (CGRect)getReaderBounds
+{
+    return [[UIScreen mainScreen] bounds];
+}
+
 - (void)_toolBarStyle
 {
     defaultTranslucent = self.navigationController.navigationBar.isTranslucent;
@@ -88,6 +93,8 @@ extern uint g_oval_color;
 {
     BOOL isActive = [[NSUserDefaults standardUserDefaults] boolForKey:@"actIsActive"];
     int licenseType = [[[NSUserDefaults standardUserDefaults] objectForKey:@"actActivationType"] intValue];
+    
+    UIBarButtonItem *closeButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"btn_back"] style:UIBarButtonItemStylePlain target:self action:@selector(closeView)];
     
     _viewModeButton = [[UIBarButtonItem alloc]initWithImage:[UIImage imageNamed:@"btn_view.png"] style:UIBarButtonItemStylePlain target:self action:@selector(showViewModeTableView)];
     _viewModeButton.width =30;
@@ -160,6 +167,7 @@ extern uint g_oval_color;
     }
     
     [_toolBarItem removeObjectsInArray:objectsToRemove];
+    [_toolBarItem insertObject:closeButton atIndex:0];
     
     [_toolBar setItems:_toolBarItem animated:NO];
 }
@@ -224,7 +232,7 @@ extern uint g_oval_color;
     }
     else
     {
-        moreTVContainer = [[RDMoreTableViewController alloc] initWithNibName:@"RDMoreTableViewController" bundle:nil];
+        moreTVContainer = [[RDMoreTableViewController alloc] init];
         moreTVContainer.modalPresentationStyle = UIModalPresentationPopover;
         [moreTVContainer setPreferredContentSize:CGSizeMake(300, 44 * 5)];
         moreTVContainer.delegate = self;
@@ -505,9 +513,9 @@ extern uint g_oval_color;
     NSArray *_toolBarItem = [[NSArray alloc]initWithObjects:searchButton,prevbutton,nextbutton,cancelbtn,nil];
     [_searchToolBar setItems:_toolBarItem animated:NO];
     [_toolBar addSubview:_searchToolBar];
-
     
-    CGRect boundsc = [[UIScreen mainScreen]bounds];
+    
+    CGRect boundsc = [self getReaderBounds];
     int cwidth = boundsc.size.width;
     CGRect statusbarRect = [[UIApplication sharedApplication] statusBarFrame];
     
@@ -616,8 +624,8 @@ extern uint g_oval_color;
         }];
         [note setValue:[[UIImage imageNamed:@"btn_annot_note.png"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal] forKey:@"image"];
         
-        UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
-            [self dismissViewControllerAnimated:YES completion:nil];
+        UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull cancelAction) {
+            [action dismissViewControllerAnimated:YES completion:nil];
         }];
         
         
@@ -636,9 +644,16 @@ extern uint g_oval_color;
 - (void)didSelectDrawMode:(int)mode
 {
     if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
-        [self dismissViewControllerAnimated:YES completion:nil];
+        [self dismissViewControllerAnimated:YES completion:^{
+            [self switchDrawMode:mode];
+        }];
+    } else {
+        [self switchDrawMode:mode];
     }
-    
+}
+
+- (void)switchDrawMode:(int)mode
+{
     switch (mode) {
         case 0:
             [self drawLine:nil];
@@ -922,7 +937,7 @@ extern uint g_oval_color;
 }
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
-    CGRect rect =[[UIScreen mainScreen]bounds];
+    CGRect rect = [self getReaderBounds];
     if ([self isPortrait])
     {
         if (rect.size.height < rect.size.width) {
@@ -946,7 +961,7 @@ extern uint g_oval_color;
     [m_view sizeThatFits:rect.size];
     [_toolBar sizeToFit];
     
-    CGRect boundsc = [[UIScreen mainScreen]bounds];
+    CGRect boundsc = [self getReaderBounds];
     int cwidth = boundsc.size.width;
     int cheight = boundsc.size.height;
     
@@ -1007,7 +1022,7 @@ extern uint g_oval_color;
 
 - (CGImageRef)imageForPage:(int)pg
 {
-    CGRect bounds = [[UIScreen mainScreen] bounds];
+    CGRect bounds = [self getReaderBounds];
     if (UIInterfaceOrientationIsLandscape([[UIApplication sharedApplication] statusBarOrientation])) {
         if (bounds.size.height > bounds.size.width) {
             bounds.size.width = bounds.size.height;
@@ -1148,7 +1163,7 @@ extern uint g_oval_color;
         return 4;
     default: return 0;
     }
-    CGRect rect = [[UIScreen mainScreen]bounds];
+    CGRect rect = [self getReaderBounds];
     
     //GEAR
     if (![self isPortrait] && rect.size.width < rect.size.height) {
@@ -1203,7 +1218,7 @@ extern uint g_oval_color;
             break;
         default: return 0;
     }
-    CGRect rect = [[UIScreen mainScreen]bounds];
+    CGRect rect = [self getReaderBounds];
     
     //GEAR
     if (![self isPortrait] && rect.size.width < rect.size.height) {
@@ -1240,14 +1255,14 @@ extern uint g_oval_color;
     switch( err )
     {
         case err_ok:
-        break;
+            break;
         case err_password:
-        return 2;
-        break;
+            return 2;
+            break;
         default: return 0;
     }
     
-    CGRect rect = [[UIScreen mainScreen]bounds];
+    CGRect rect = [self getReaderBounds];
     
     //GEAR
     if (![self isPortrait] && rect.size.width < rect.size.height) {
@@ -1277,7 +1292,7 @@ extern uint g_oval_color;
 
 - (void)PDFSeekBarInit:(int)pageno
 {
-    CGRect boundsc = [[UIScreen mainScreen]bounds];
+    CGRect boundsc = [self getReaderBounds];
     if (![self isPortrait] && boundsc.size.width < boundsc.size.height) {
         float height = boundsc.size.height;
         boundsc.size.height = boundsc.size.width;
@@ -1336,7 +1351,7 @@ extern uint g_oval_color;
 
 -(void)PDFThumbNailinit:(int)pageno
 {
-    CGRect boundsc = [[UIScreen mainScreen]bounds];
+    CGRect boundsc = [self getReaderBounds];
     if (![self isPortrait] && boundsc.size.width < boundsc.size.height) {
         float height = boundsc.size.height;
         boundsc.size.height = boundsc.size.width;
@@ -1350,15 +1365,13 @@ extern uint g_oval_color;
     float hi = 44;
     CGRect statusbarRect = [[UIApplication sharedApplication] statusBarFrame];
     
-    thumbViewHeight = 99;
-    
     if(SYS_VERSION>=7.0)
     {
-        m_Thumbview = [[PDFThumbView alloc] initWithFrame:CGRectMake(0, cheight-thumbViewHeight, cwidth, thumbViewHeight)];
+        m_Thumbview = [[PDFThumbView alloc] initWithFrame:CGRectMake(0, cheight-thumbHeight, cwidth, thumbHeight)];
         _pageNumLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, statusbarRect.size.height+hi+1, 65, 30)];
     }
     else{
-        m_Thumbview = [[PDFThumbView alloc] initWithFrame:CGRectMake(0, cheight-hi-thumbViewHeight-statusbarRect.size.height, cwidth, thumbViewHeight)];
+        m_Thumbview = [[PDFThumbView alloc] initWithFrame:CGRectMake(0, cheight-hi-thumbHeight-statusbarRect.size.height, cwidth, thumbHeight)];
         _pageNumLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 65, 30)];
     }
     [m_Thumbview vOpen :m_doc :(id<PDFThumbViewDelegate>)self];
@@ -1384,7 +1397,7 @@ extern uint g_oval_color;
 
 -(void)initbar :(int) pageno
 {
-    CGRect boundsc = [[UIScreen mainScreen]bounds];
+    CGRect boundsc = [self getReaderBounds];
     if (![self isPortrait] && boundsc.size.width < boundsc.size.height) {
         float height = boundsc.size.height;
         boundsc.size.height = boundsc.size.width;
@@ -1430,15 +1443,15 @@ extern uint g_oval_color;
     err = [m_doc open:path :pwd];
     switch( err )
     {
-    case err_ok:
-        break;
-    case err_password:
-        return 2;
-        break;
-    default: return 0;
+        case err_ok:
+            break;
+        case err_password:
+            return 2;
+            break;
+        default: return 0;
     }
-
-    CGRect rect = [[UIScreen mainScreen]bounds];
+    
+    CGRect rect = [self getReaderBounds];
     //GEAR
     if (![self isPortrait] && rect.size.width < rect.size.height) {
         float height = rect.size.height;
@@ -1471,6 +1484,8 @@ extern uint g_oval_color;
 
 -(void)PDFClose
 {
+    [_toolBar removeFromSuperview];
+    
     if (SEARCH_LIST == 1) {
         [[RDExtendedSearch sharedInstance] clearSearch];
     }
@@ -1488,7 +1503,7 @@ extern uint g_oval_color;
 - (void)searchBarSearchButtonClicked:(UISearchBar *)_m_searchBar
 {
     float hi = self.navigationController.navigationBar.bounds.size.height;
-    CGRect boundsc = [[UIScreen mainScreen]bounds];
+    CGRect boundsc = [self getReaderBounds];
     int cwidth = boundsc.size.width;
     if(SYS_VERSION>=7.0)
     {
@@ -1719,18 +1734,18 @@ extern uint g_oval_color;
     else
     {
         
-         if(m_Thumbview.hidden)
-         {
-             m_Thumbview.hidden = NO;
-             m_slider.hidden = NO;
-             [_pageNumLabel setHidden:false];
-         }
-         else
-         {
-             m_Thumbview.hidden =YES;
-             m_slider.hidden = YES;
-             [_pageNumLabel setHidden:true];
-         }
+        if(m_Thumbview.hidden)
+        {
+            m_Thumbview.hidden = NO;
+            m_slider.hidden = NO;
+            [_pageNumLabel setHidden:false];
+        }
+        else
+        {
+            m_Thumbview.hidden =YES;
+            m_slider.hidden = YES;
+            [_pageNumLabel setHidden:true];
+        }
         
         b_outline = true;
         m_bSel = false;
@@ -1904,7 +1919,7 @@ extern uint g_oval_color;
 //this mehod fired only when vAnnotPerform method invoked.
 - (void)OnAnnotGoto:(int)pageno
 {
-     [m_view vGoto:pageno];
+    [m_view vGoto:pageno];
 }
 //this mehod fired only when vAnnotPerform method invoked.
 - (void)OnAnnotPopup:(PDFAnnot *)annot :(NSString *)subj :(NSString *)text
@@ -1931,7 +1946,7 @@ extern uint g_oval_color;
 {
     NSLog(@"list sels");
     
-    annotListTV = [[RDAnnotListViewController alloc] initWithNibName:@"RDAnnotListViewController" bundle:nil];
+    annotListTV = [[RDAnnotListViewController alloc] init];
     BOOL isMultiSel;
     isMultiSel = [annot isMultiSel];
     annotListTV.delegate = self;
@@ -2012,11 +2027,11 @@ extern uint g_oval_color;
         }
         else
         {
-           // m_Thumbview.hidden =YES;
+            // m_Thumbview.hidden =YES;
             [_pageNumLabel setHidden:true];
-           //[[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
-           [[UIApplication sharedApplication] setStatusBarHidden:YES];
-           // BOOL navBarState = [self.navigationController isNavigationBarHidden];
+            //[[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
+            [[UIApplication sharedApplication] setStatusBarHidden:YES];
+            // BOOL navBarState = [self.navigationController isNavigationBarHidden];
             //Set the navigationBarHidden to the opposite of the current state.
             [self.navigationController setNavigationBarHidden:YES animated:YES];
             [_m_searchBar resignFirstResponder];
@@ -2470,7 +2485,7 @@ extern uint g_oval_color;
     
     [[NSUserDefaults standardUserDefaults] setInteger:mode forKey:@"DefView"];
     [[NSUserDefaults standardUserDefaults] synchronize];
-    CGRect rect = [[UIScreen mainScreen]bounds];
+    CGRect rect = [self getReaderBounds];
     
     //GEAR
     if (![self isPortrait] && rect.size.width < rect.size.height) {
