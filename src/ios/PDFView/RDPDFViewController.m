@@ -937,6 +937,7 @@ extern uint g_oval_color;
 }
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
+    [m_view setEditBoxWithText:textFd.text];
     CGRect rect = [self getReaderBounds];
     if ([self isPortrait])
     {
