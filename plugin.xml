@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
-        id="com.radaee.cordova" version="1.3.2">
+        id="com.radaee.cordova" version="1.3.9">
 
     <engines>
         <engine name="cordova" version=">=3.0.0" />
@@ -27,6 +27,7 @@
 
 		<config-file target="AndroidManifest.xml" parent="application">
 			<activity android:name="com.radaee.reader.PDFViewAct" android:configChanges="orientation|keyboardHidden|screenSize" android:theme="@android:style/Theme.NoTitleBar"/>
+            <activity android:name="com.radaee.reader.PDFGLViewAct" android:configChanges="orientation|keyboardHidden|screenSize" android:theme="@android:style/Theme.NoTitleBar"/>
 			<activity android:configChanges="orientation|keyboardHidden|screenSize" android:name="com.radaee.util.PopupEditAct" android:theme="@android:style/Theme.Translucent" />
 			<activity android:name="com.radaee.reader.PDFPagerAct" android:configChanges="orientation|keyboardHidden|screenSize" android:label="@string/app_name" />
 			<activity
@@ -76,6 +77,10 @@
         <source-file src="src/android/ViewLib/src/main/java/com/radaee/reader/PDFViewAct.java" target-dir="src/com/radaee/reader" />
         <source-file src="src/android/ViewLib/src/main/java/com/radaee/reader/PDFViewController.java" target-dir="src/com/radaee/reader" />
 		<source-file src="src/android/ViewLib/src/main/java/com/radaee/reader/PDFPagerAct.java" target-dir="src/com/radaee/reader" />
+        <source-file src="src/android/ViewLib/src/main/java/com/radaee/reader/GLCanvas.java" target-dir="src/com/radaee/reader" />
+        <source-file src="src/android/ViewLib/src/main/java/com/radaee/reader/GLView.java" target-dir="src/com/radaee/reader" />
+        <source-file src="src/android/ViewLib/src/main/java/com/radaee/reader/PDFGLLayoutView.java" target-dir="src/com/radaee/reader" />
+        <source-file src="src/android/ViewLib/src/main/java/com/radaee/reader/PDFGLViewAct.java" target-dir="src/com/radaee/reader" />
 
         <!-- Radaee source - java.com.radaee.util -->
         <source-file src="src/android/ViewLib/src/main/java/com/radaee/util/ComboList.java" target-dir="src/com/radaee/util" />
@@ -98,18 +103,12 @@
 		<source-file src="src/android/ViewLib/src/main/java/com/radaee/util/RadaeePDFManager.java" target-dir="src/com/radaee/util" />
 		<source-file src="src/android/ViewLib/src/main/java/com/radaee/util/BookmarkHandler.java" target-dir="src/com/radaee/util" />
 		<source-file src="src/android/ViewLib/src/main/java/com/radaee/util/CaptureSignature.java" target-dir="src/com/radaee/util" />
-
+		<source-file src="src/android/ViewLib/src/main/java/com/radaee/util/PDFThumbGrid.java" target-dir="src/com/radaee/util" />
+        
         <!-- Radaee source - java.com.radaee.util -->
-        <source-file src="src/android/ViewLib/src/main/java/fi/harism/curl/CurlMesh.java" target-dir="src/main/java/fi/harism/curl" />
-        <source-file src="src/android/ViewLib/src/main/java/fi/harism/curl/CurlPage.java" target-dir="src/main/java/fi/harism/curl" />
-        <source-file src="src/android/ViewLib/src/main/java/fi/harism/curl/CurlRenderer.java" target-dir="src/main/java/fi/harism/curl" />
-        <source-file src="src/android/ViewLib/src/main/java/fi/harism/curl/CurlView.java" target-dir="src/main/java/fi/harism/curl" />
 
         <source-file src="src/android/ViewLib/src/main/jniLibs/arm64-v8a/librdpdf.so" target-dir="libs/arm64-v8a" />
-        <source-file src="src/android/ViewLib/src/main/jniLibs/armeabi/librdpdf.so" target-dir="libs/armeabi" />
         <source-file src="src/android/ViewLib/src/main/jniLibs/armeabi-v7a/librdpdf.so" target-dir="libs/armeabi-v7a" />
-        <source-file src="src/android/ViewLib/src/main/jniLibs/mips/librdpdf.so" target-dir="libs/mips" />
-        <source-file src="src/android/ViewLib/src/main/jniLibs/mips64/librdpdf.so" target-dir="libs/mips64" />
         <source-file src="src/android/ViewLib/src/main/jniLibs/x86/librdpdf.so" target-dir="libs/x86" />
         <source-file src="src/android/ViewLib/src/main/jniLibs/x86_64/librdpdf.so" target-dir="libs/x86_64" />
 
@@ -141,6 +140,8 @@
 		<source-file src="src/android/ViewLib/src/main/res/layout/bookmark_row.xml" target-dir="res/layout" />
 		<source-file src="src/android/ViewLib/src/main/res/layout/bookmark_popup_menu.xml" target-dir="res/layout" />
 		<source-file src="src/android/ViewLib/src/main/res/layout/signature_pad.xml" target-dir="res/layout" />
+		<source-file src="src/android/ViewLib/src/main/res/layout/thumb_grid_view.xml" target-dir="res/layout" />
+        <source-file src="src/android/ViewLib/src/main/res/layout/pdf_gllayout.xml" target-dir="res/layout" />
 
         <!-- Radaee raw -->
         <source-file src="src/android/ViewLib/src/main/res/raw/amiri_regular" target-dir="res/raw" />
@@ -203,6 +204,7 @@
 		<source-file src="src/android/ViewLib/src/main/res/drawable/ic_more.png" target-dir="res/drawable" />
 		<source-file src="src/android/ViewLib/src/main/res/drawable/btn_view_horz.png" target-dir="res/drawable" />
 		<source-file src="src/android/ViewLib/src/main/res/drawable/save.png" target-dir="res/drawable" />
+        <source-file src="src/android/ViewLib/src/main/res/drawable/ic_share.png" target-dir="res/drawable" />
 
 		<!-- Radaee values -->
 		<source-file src="src/android/ViewLib/src/main/res/values/styles.xml" target-dir="res/values" />
@@ -234,91 +236,100 @@
 
 		<!-- plugman cannot merge - prepare manual merge -->
         <config-file target="res/values/strings.xml" parent="/resources">
-			<string name="failed_invalid_password">Open Failed: Invalid Password</string>
-			<string name="failed_invalid_format">Open Failed: Damaged or Invalid PDF file</string>
-			<string name="failed_encryption">Open Failed: Unknown Encryption</string>
-			<string name="failed_invalid_path">Open Failed: Access denied or Invalid path</string>
-			<string name="failed_unknown">Open Failed: Unknown Error</string>
-			<string name="please_wait">Please wait</string>
-			<string name="no_more_found">No more found</string>
-
-			<string name="thumbnail_creation_running">Thumbnail creation is running…</string>
-			<string name="exiting">Exiting</string>
-			<string name="no">No</string>
-			<string name="yes">Yes</string>
-			<string name="annotation_failed">Add annotation failed!</string>
-			<string name="cannot_write_or_encrypted">Cannot write or encrypted!</string>
-			<string name="copy_text_to_clipboard">Copy text to clipboard</string>
-			<string name="highlight_texts">Highlight texts</string>
-			<string name="underline">Underline</string>
-			<string name="strikeout">StrikeOut</string>
-			<string name="squiggly">Squiggly</string>
-			<string name="process_selected_text">Process selected text</string>
-			<string name="cancel">Cancel</string>
-			<string name="no_more_redo">No more redo.</string>
-			<string name="no_more_undo">No more undo.</string>
-			<string name="pdf_outline">PDF Outlines</string>
-			<string name="single_page">Single Page</string>
-			<string name="vertical">Vertical</string>
-			<string name="horizontal">Horizontal</string>
-			<string name="dual_page">Dual Page</string>
-			<string name="save_msg">Document modified.\r\nDo you want to save it?</string>
-			<string name="page_change_block">You cannot change page while page is zoomed, Zoom out first!</string>
-
-			<string name="note_content">Note Content</string>
-			<string name="input_password">Input Password</string>
-			<string name="loading_pdf">Loading PDF file…</string>
-			<string name="browse_open_file">Browse And Open File</string>
-			<string name="view_pager">ViewPager</string>
-			<string name="open_asset">Open From Assets (ReadOnly)</string>
-			<string name="open_sdcard">Open From sdcard</string>
-			<string name="open_http">Open Http Link (INTERNET access)</string>
-			<string name="using_RGB_565">Using RGB_565</string>
-			<string name="using_RGB_4444">Using RGB_4444</string>
-			<string name="simple_open_gl">Simple OpenGL</string>
-			<string name="curl_pages">Curl Pages</string>
-			<string name="advance">Advance</string>
-			<string name="create_pdf">CreatePDF</string>
-			<string name="javascript">JavaScript</string>
-			<string name="about">About</string>
-
-			<string name="ok">OK</string>
-			<string name="todo_open_url">todo: open url: </string>
-			<string name="todo_java_script">todo: execute java script</string>
-			<string name="todo_play_movie">todo: play movie</string>
-			<string name="todo_play_sound">todo: play sound</string>
-			<string name="todo_attachment">todo: treat attachment</string>
-			<string name="todo_3d">todo: play 3D module</string>
-			<string name="file_not_exist">File not exists: </string>
-			<string name="file_not_exist_error">%1$s not exists or not a file.</string>
-			<string name="file_not_opened">Cannot open %1$s.</string>
-			<string name="catalog_not_found">Catalog object is not a dictionary.</string>
-			<string name="edit_catalog_failed">Edit catalog failed.</string>
-
-			<string name="no_pdf_outlines">PDF does not contain outlines</string>
-			<string name="pdf_print_not_available">PDF File is not available for print.</string>
-			<string name="pdf_print_calculation_failed">Page count calculation failed.</string>
-
-			<string name="copy_text">Text copied to clipboard: %1$s</string>
-
-			<string name="print">Print</string>
-			<string name="bookmark_label">Page: %1$d</string>
-			<string name="bookmark_already_added">Bookmark already exists</string>
-			<string name="bookmark_error">Error: Cannot add bookmark</string>
-			<string name="bookmark_remove_error">Error: Cannot delete bookmark</string>
-			<string name="bookmark_success">Bookmark (%1$s) added successfully.</string>
-			<string name="bookmark_add">Add to Bookmarks</string>
-			<string name="bookmark_show">Show Bookmarks</string>
-			<string name="bookmarks">Bookmarks</string>
-			<string name="no_bookmarks">No bookmarks to show</string>
-			<string name="loading">Loading…</string>
-			<string name="delete">Delete</string>
-			<string name="confirm">Confirm</string>
-			<string name="clear">Clear</string>
-			<string name="save">Save</string>
-			<string name="saved_message">Document saved</string>
-			<string name="delete_signature_message">A signature is already present, do you want to delete it?</string>
-			<string name="warning">Warning</string>
+            <string name="failed_invalid_password">Open Failed: Invalid Password</string>
+            <string name="failed_invalid_format">Open Failed: Damaged or Invalid PDF file</string>
+            <string name="failed_encryption">Open Failed: Unknown Encryption</string>
+            <string name="failed_invalid_path">Open Failed: Access denied or Invalid path</string>
+            <string name="failed_unknown">Open Failed: Unknown Error</string>
+            <string name="please_wait">Please wait</string>
+            <string name="no_more_found">No more found</string>
+            
+            <string name="thumbnail_creation_running">Thumbnail creation is running…</string>
+            <string name="exiting">Exiting</string>
+            <string name="no">No</string>
+            <string name="yes">Yes</string>
+            <string name="annotation_failed">Add annotation failed!</string>
+            <string name="cannot_write_or_encrypted">Cannot write or encrypted!</string>
+            <string name="copy_text_to_clipboard">Copy text to clipboard</string>
+            <string name="highlight_texts">Highlight texts</string>
+            <string name="underline">Underline</string>
+            <string name="strikeout">StrikeOut</string>
+            <string name="squiggly">Squiggly</string>
+            <string name="process_selected_text">Process selected text</string>
+            <string name="cancel">Cancel</string>
+            <string name="no_more_redo">No more redo.</string>
+            <string name="no_more_undo">No more undo.</string>
+            <string name="pdf_outline">PDF Outlines</string>
+            <string name="single_page">Single Page</string>
+            <string name="vertical">Vertical</string>
+            <string name="horizontal">Horizontal</string>
+            <string name="dual_page">Dual Page</string>
+            <string name="curl">Curl</string>
+            <string name="reflow">Text reflow</string>
+            <string name="save_msg">Document modified.\nDo you want to save it?</string>
+            <string name="page_change_block">You cannot change page while page is zoomed, Zoom out first!</string>
+            
+            <string name="read_only_annotation">Read only annotation</string>
+            <string name="note_content">Note Content</string>
+            <string name="note_subject">Subject:</string>
+            <string name="note_text">Content:</string>
+            <string name="show_password">Show password</string>
+            <string name="input_password">Input Password</string>
+            <string name="loading_pdf">Loading PDF file…</string>
+            <string name="browse_open_file">Browse And Open File</string>
+            <string name="view_pager">ViewPager</string>
+            <string name="open_asset">Open From Assets (ReadOnly)</string>
+            <string name="open_sdcard">Open From sdcard</string>
+            <string name="open_http">Open Http Link (INTERNET access)</string>
+            <string name="using_RGB_565">Using RGB_565</string>
+            <string name="using_RGB_4444">Using RGB_4444</string>
+            <string name="simple_open_gl">Simple OpenGL</string>
+            <string name="curl_pages">Curl Pages</string>
+            <string name="advance">Advance</string>
+            <string name="create_pdf">CreatePDF</string>
+            <string name="javascript">JavaScript</string>
+            <string name="about">About</string>
+            
+            <string name="ok">OK</string>
+            <string name="todo_open_url">todo: open url: </string>
+            <string name="todo_java_script">todo: execute java script</string>
+            <string name="todo_play_movie">todo: play movie</string>
+            <string name="todo_play_sound">todo: play sound</string>
+            <string name="todo_attachment">todo: treat attachment</string>
+            <string name="todo_3d">todo: play 3D module</string>
+            <string name="file_not_exist">File not exists: </string>
+            <string name="file_not_exist_error">%1$s not exists or not a file.</string>
+            <string name="file_not_opened">Cannot open %1$s.</string>
+            <string name="catalog_not_found">Catalog object is not a dictionary.</string>
+            <string name="edit_catalog_failed">Edit catalog failed.</string>
+            
+            <string name="no_pdf_outlines">PDF does not contain outlines</string>
+            <string name="pdf_print_not_available">PDF File is not available for print.</string>
+            <string name="pdf_print_calculation_failed">Page count calculation failed.</string>
+            
+            <string name="pdf_share_not_available">PDF File is not available for share.</string>
+            
+            <string name="copy_text">Text copied to clipboard: %1$s</string>
+            
+            <string name="print">Print</string>
+            <string name="share">Share</string>
+            <string name="bookmark_label">Page: %1$d</string>
+            <string name="bookmark_already_added">Bookmark already exists</string>
+            <string name="bookmark_error">Error: Cannot add bookmark</string>
+            <string name="bookmark_remove_error">Error: Cannot delete bookmark</string>
+            <string name="bookmark_success">Bookmark (%1$s) added successfully.</string>
+            <string name="bookmark_add">Add to Bookmarks</string>
+            <string name="bookmark_show">Show Bookmarks</string>
+            <string name="bookmarks">Bookmarks</string>
+            <string name="no_bookmarks">No bookmarks to show</string>
+            <string name="loading">Loading…</string>
+            <string name="delete">Delete</string>
+            <string name="confirm">Confirm</string>
+            <string name="clear">Clear</string>
+            <string name="save">Save</string>
+            <string name="saved_message">Document saved</string>
+            <string name="delete_signature_message">A signature is already present, do you want to delete it?</string>
+            <string name="warning">Warning</string>
 		</config-file>
 
         <!-- Hooks -->
@@ -343,7 +354,7 @@
         <source-file src="src/ios/PDFView/RDPDFViewController.m" />
         <header-file src="src/ios/PDFView/RDPDFViewController.h" />
         <resource-file src="src/ios/PDFView/RDPDFViewController.xib" />
-        <resource-file src="src/ios/Resources/annot_remove.png" />
+        <resource-file src="src/ios/Resources/btn_annot_remove.png" />
         <resource-file src="src/ios/Resources/backImage.png" />
         <resource-file src="src/ios/Resources/btn_annot_ellipse.png" />
         <resource-file src="src/ios/Resources/btn_annot_ink.png" />
@@ -375,6 +386,7 @@
         <resource-file src="src/ios/Resources/btn_annot_note.png" />
         <resource-file src="src/ios/Resources/btn_undo.png" />
         <resource-file src="src/ios/Resources/btn_redo.png" />
+        <resource-file src="src/ios/Resources/btn_share.png" />
         
 
         <!-- Radaee sources -->
@@ -388,8 +400,16 @@
         <header-file src="src/ios/PDFView/TextAnnotViewController.h" />
         <source-file src="src/ios/PDFView/ViewModeTableViewController.m" />
         <header-file src="src/ios/PDFView/ViewModeTableViewController.h" />
+        <header-file src="src/ios/PDFView/PopUpView/PopupMenu.h"/>
+        <source-file src="src/ios/PDFView/PopUpView/PopupMenu.m"/>
+        <header-file src="src/ios/PDFView/PopUpView/PopupMenuItem.h"/>
+        <source-file src="src/ios/PDFView/PopUpView/PopupMenuItem.m"/>
+        <header-file src="src/ios/PDFView/PopUpView/PopupMenuOverlayView.h"/>
+        <source-file src="src/ios/PDFView/PopUpView/PopupMenuOverlayView.m"/>
         <source-file src="src/ios/PDFView/PDFReflowView.m" />
         <header-file src="src/ios/PDFView/PDFReflowView.h" />
+        <header-file src="src/ios/PDFView/PDFGridView.h" />
+        <source-file src="src/ios/PDFView/PDFGridView.m" />
         <source-file src="src/ios/PDFView/PDFThumbView.m" />
         <header-file src="src/ios/PDFView/PDFThumbView.h" />
         <source-file src="src/ios/PDFView/PDFHttpStream.m" />
@@ -404,8 +424,12 @@
         <header-file src="src/ios/PDFView/PDFVGlobal.h" />
         <source-file src="src/ios/PDFView/PDFView.m" />
         <header-file src="src/ios/PDFView/PDFView.h" />
-        <source-file src="src/ios/PDFView/PDFVPage.m" />
+        <header-file src="src/ios/PDFView/RDAnnotToolBar.h" />
+        <source-file src="src/ios/PDFView/RDAnnotToolBar.m" />
+        <header-file src="src/ios/PDFView/RDGlobal.h" />
+        <source-file src="src/ios/PDFView/RDGlobal.m" />
         <header-file src="src/ios/PDFView/PDFVPage.h" />
+        <source-file src="src/ios/PDFView/PDFVPage.m" />
         <source-file src="src/ios/PDFView/PDFVThread.m" />
         <header-file src="src/ios/PDFView/PDFVThread.h" />
         <source-file src="src/ios/PDFLib/PDFObjc.m" />
@@ -453,35 +477,35 @@
         <resource-file src="src/ios/cmaps/cmaps.dat" />
         <resource-file src="src/ios/cmaps/umaps.dat" />
         <resource-file src="src/ios/cmaps/cmyk_rgb.dat" />
-        <resource-file src="src/ios/fdat/res00" />
-        <resource-file src="src/ios/fdat/res01" />
-        <resource-file src="src/ios/fdat/res02" />
-        <resource-file src="src/ios/fdat/res03" />
-        <resource-file src="src/ios/fdat/res04" />
-        <resource-file src="src/ios/fdat/res05" />
-        <resource-file src="src/ios/fdat/res06" />
-        <resource-file src="src/ios/fdat/res07" />
-        <resource-file src="src/ios/fdat/res08" />
-        <resource-file src="src/ios/fdat/res09" />
-        <resource-file src="src/ios/fdat/res10" />
-        <resource-file src="src/ios/fdat/res11" />
-        <resource-file src="src/ios/fdat/res12" />
-        <resource-file src="src/ios/fdat/res13" />
-        <resource-file src="src/ios/fdat/argbsn00lp.ttf" />
-        <resource-file src="src/ios/fdat/arimo.ttf" />
-        <resource-file src="src/ios/fdat/arimob.ttf" />
-        <resource-file src="src/ios/fdat/arimobi.ttf" />
-        <resource-file src="src/ios/fdat/arimoi.ttf" />
-        <resource-file src="src/ios/fdat/cousine.ttf" />
-        <resource-file src="src/ios/fdat/cousineb.ttf" />
-        <resource-file src="src/ios/fdat/cousinebi.ttf" />
-        <resource-file src="src/ios/fdat/cousinei.ttf" />
-        <resource-file src="src/ios/fdat/rdf008.ttf" />
-        <resource-file src="src/ios/fdat/rdf013.ttf" />
-        <resource-file src="src/ios/fdat/tinos.ttf" />
-        <resource-file src="src/ios/fdat/tinosb.ttf" />
-        <resource-file src="src/ios/fdat/tinosbi.ttf" />
-        <resource-file src="src/ios/fdat/tinosi.ttf" />
+        <resource-file src="src/ios/fdat/stdRes/00" />
+        <resource-file src="src/ios/fdat/stdRes/01" />
+        <resource-file src="src/ios/fdat/stdRes/02" />
+        <resource-file src="src/ios/fdat/stdRes/03" />
+        <resource-file src="src/ios/fdat/stdRes/04" />
+        <resource-file src="src/ios/fdat/stdRes/05" />
+        <resource-file src="src/ios/fdat/stdRes/06" />
+        <resource-file src="src/ios/fdat/stdRes/07" />
+        <resource-file src="src/ios/fdat/stdRes/08" />
+        <resource-file src="src/ios/fdat/stdRes/09" />
+        <resource-file src="src/ios/fdat/stdRes/10" />
+        <resource-file src="src/ios/fdat/stdRes/11" />
+        <resource-file src="src/ios/fdat/stdRes/12" />
+        <resource-file src="src/ios/fdat/stdRes/13" />
+        <resource-file src="src/ios/fdat/stdFont/argbsn00lp.ttf" />
+        <resource-file src="src/ios/fdat/stdFont/arimo.ttf" />
+        <resource-file src="src/ios/fdat/stdFont/arimob.ttf" />
+        <resource-file src="src/ios/fdat/stdFont/arimobi.ttf" />
+        <resource-file src="src/ios/fdat/stdFont/arimoi.ttf" />
+        <resource-file src="src/ios/fdat/stdFont/cousine.ttf" />
+        <resource-file src="src/ios/fdat/stdFont/cousineb.ttf" />
+        <resource-file src="src/ios/fdat/stdFont/cousinebi.ttf" />
+        <resource-file src="src/ios/fdat/stdFont/cousinei.ttf" />
+        <resource-file src="src/ios/fdat/stdFont/rdf008.ttf" />
+        <resource-file src="src/ios/fdat/stdFont/rdf013.ttf" />
+        <resource-file src="src/ios/fdat/stdFont/tinos.ttf" />
+        <resource-file src="src/ios/fdat/stdFont/tinosb.ttf" />
+        <resource-file src="src/ios/fdat/stdFont/tinosbi.ttf" />
+        <resource-file src="src/ios/fdat/stdFont/tinosi.ttf" />
 
         <!-- fonts -->
         <resource-file src="fonts/Roboto-Black.ttf" />

@@ -39,6 +39,7 @@
     highlightColor = (int)[[NSUserDefaults standardUserDefaults] integerForKey:@"HighlightColor"];
     ovalColor = (int)[[NSUserDefaults standardUserDefaults] integerForKey:@"OvalColor"];
     selColor = (int)[[NSUserDefaults standardUserDefaults] integerForKey:@"SelColor"];
+    arrowColor = (int)[[NSUserDefaults standardUserDefaults] integerForKey:@"ArrowColor"];
 }
 
 #pragma mark - Plugin API
@@ -130,7 +131,7 @@
     
     [self readerInit];
     
-    int result = [m_pdf PDFOpen:filePath :password atPage:page readOnly:readOnly autoSave:autoSave];
+    int result = [m_pdf PDFOpen:filePath :password atPage:page readOnly:readOnly autoSave:autoSave author:@""];
     
     NSLog(@"%d", result);
     if(result != err_ok && result != err_open){
@@ -373,20 +374,16 @@
     [m_pdf setHideGridImage:YES];
     
     if (disableToolbar) {
-        [m_pdf setHideViewModeImage:YES];
         [m_pdf setHideSearchImage:YES];
         [m_pdf setHideDrawImage:YES];
         [m_pdf setHideSelImage:YES];
-        [m_pdf setHideOutlineImage:YES];
         [m_pdf setHideUndoImage:YES];
         [m_pdf setHideRedoImage:YES];
         [m_pdf setHideMoreImage:YES];
     } else {
-        [m_pdf setHideViewModeImage:NO];
         [m_pdf setHideSearchImage:NO];
         [m_pdf setHideDrawImage:NO];
         [m_pdf setHideSelImage:NO];
-        [m_pdf setHideOutlineImage:NO];
         [m_pdf setHideUndoImage:NO];
         [m_pdf setHideRedoImage:NO];
         [m_pdf setHideMoreImage:NO];
@@ -402,6 +399,7 @@
      4: highlightColor
      5: ovalColor
      6: selColor
+     7: arrowColor
      
      */
     
@@ -412,6 +410,7 @@
     [self setColor:0xFFFFFF00 forFeature:4];
     [self setColor:0xFF000000 forFeature:5];
     [self setColor:0x400000C0 forFeature:6];
+    [self setColor:0xFF000000 forFeature:7];
     
     [self loadSettingsWithDefaults];
 }
@@ -561,6 +560,49 @@
     }
 }
 
+- (void)flatAnnots:(CDVInvokedUrlCommand *)command
+{
+    self.cdv_command = command;
+    
+    if([m_pdf flatAnnots])
+    {
+        [self cdvOkWithMessage:@"Success"];
+    } else {
+        [self cdvErrorWithMessage:@"Failure"];
+    }
+}
+- (void)flatAnnotAtPage:(CDVInvokedUrlCommand *)command
+{
+    self.cdv_command = command;
+    
+    NSDictionary *params = (NSDictionary*) [cdv_command argumentAtIndex:0];
+    int pageno = [[params objectForKey:@"page"] intValue];
+    
+    if([m_pdf flatAnnotAtPage:pageno doc:nil])
+    {
+        [self cdvOkWithMessage:@"Success"];
+    } else {
+        [self cdvErrorWithMessage:@"Failure"];
+    }
+    
+}
+- (void)saveDocumentToPath:(CDVInvokedUrlCommand *)command
+{
+    self.cdv_command = command;
+    
+    NSDictionary *params = (NSDictionary*) [cdv_command argumentAtIndex:0];
+    
+    NSString *path = [params objectForKey:@"path"];
+    
+    if([m_pdf saveDocumentToPath:path])
+    {
+        [self cdvOkWithMessage:@"Success"];
+    } else {
+        [self cdvErrorWithMessage:@"Failure"];
+    }
+    
+}
+
 #pragma mark - Settings
 
 - (void)toggleThumbSeekBar:(int)mode
@@ -631,6 +673,10 @@
             selColor = color;
             break;
             
+        case 7:
+            arrowColor = color;
+            break;
+            
         default:
             break;
     }
@@ -655,6 +701,7 @@
     [[NSUserDefaults standardUserDefaults] setInteger:ovalColor forKey:@"OvalColor"];
     [[NSUserDefaults standardUserDefaults] setInteger:_viewMode forKey:@"DefView"];
     [[NSUserDefaults standardUserDefaults] setInteger:selColor forKey:@"SelColor"];
+    [[NSUserDefaults standardUserDefaults] setInteger:arrowColor forKey:@"ArrowColor"];
     
     g_def_view = (int)[[NSUserDefaults standardUserDefaults] integerForKey:@"DefView"];
     g_MatchWholeWord = (int)[[NSUserDefaults standardUserDefaults] integerForKey:@"MatchWholeWord"];
@@ -663,6 +710,7 @@
     g_ink_color = inkColor;
     g_sel_color = selColor;
     g_oval_color = ovalColor;
+    g_line_color = arrowColor;
     annotHighlightColor = highlightColor;
     annotUnderlineColor = underlineColor;
     annotStrikeoutColor = strikeoutColor;

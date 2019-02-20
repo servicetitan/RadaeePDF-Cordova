@@ -17,7 +17,7 @@ import java.io.InputStream;
  * class for Global setting.
  * 
  * @author Radaee
- * @version 3.15.1
+ * @version 3.50
  */
 public class Global
 {
@@ -331,9 +331,25 @@ public class Global
 	 */
 	public static int thumbViewBgColor = 0x40CCCCCC;
 	/**
+	 * Thumb grid view's background color
+	 */
+	public static int thumbGridBgColor = 0xFFCCCCCC;
+	/**
 	 * Thumb view height in dp, i.e. 100 = 100dp
 	 */
 	public static int thumbViewHeight = 100;
+	/**
+	 * Thumb grid view's element height in dp, i.e. 100 = 100dp
+	 */
+	public static int thumbGridElementHeight = 150;
+	/**
+	 * Thumb grid view's element gap (the vertical/horizontal spacing)
+	 */
+	public static int thumbGridElementGap = 10;
+	/**
+	 * Thumb grid view's render mode, 0:full screen 1:justify center
+	 */
+	public static int thumbGridViewMode = 0;
 	/**
 	 * Reader view background color
 	 */
@@ -391,6 +407,8 @@ public class Global
     public static int line_annot_style2 = 0;
     public static int line_annot_color = 0x80FF0000;
     public static int line_annot_fill_color = 0x800000FF;
+
+	public static boolean fit_different_page_size = false;
 
 	static private void load_file(Resources res, int res_id, File save_file)
 	{
@@ -480,9 +498,10 @@ public class Global
 		load_cmaps( res, R.raw.cmaps, new File(files, "cmaps"), R.raw.umaps, new File(files, "umaps") );
 
 		// create temporary dictionary, to save media or attachment data.
-		File sdDir = Environment.getExternalStorageDirectory();
+		File sdDir = act.getExternalFilesDir("");
+		//File sdDir = Environment.getExternalStorageDirectory();
         File ftmp;
-		if (sdDir != null && Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
+		if (sdDir != null)
             ftmp = new File(sdDir, "rdtmp");
 		else
             ftmp = new File(act.getFilesDir(), "rdtmp");
@@ -756,7 +775,7 @@ public class Global
         // but not good support france, german and some EUR languages.
         // if DroidSansFallback not exits, we using Arimo, loading from resource, which has good support EUR languages.
 		// For arabic support use setAnnotFont("Amiri-Regular")
-        if (!setAnnotFont("DroidSansFallback") &&
+        if (//!setAnnotFont("DroidSansFallback") &&
             !setAnnotFont("Arimo") && face_name != null) {
             setAnnotFont(face_name);
         }
@@ -782,7 +801,7 @@ public class Global
 		render_mode = recommandedRenderMode();// 0,1,2 0:draft 1:normal 2:best with over print support.
 		dark_mode = false;// dark mode
 		zoomLevel = 3;
-        debug_mode = false;
+		//hideAnnots(true);
 		setAnnotTransparency(annotTransparencyColor);
 	}
 
@@ -950,3 +969,4 @@ public class Global
 		return ms_init;
 	}
 }
+

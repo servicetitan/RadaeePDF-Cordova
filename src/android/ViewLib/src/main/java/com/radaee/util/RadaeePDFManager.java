@@ -9,16 +9,9 @@ import android.widget.Toast;
 import com.radaee.pdf.Global;
 import com.radaee.pdf.Page;
 import com.radaee.reader.PDFViewAct;
-import com.servicetitan.mobile.R;
-import com.radaee.pdf.Document;
-import com.radaee.pdf.Page.Annotation;
+import com.radaee.viewlib.R;
 
 import java.io.File;
-import java.util.HashSet;
-
-import com.google.gson.Gson;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 /**
  * A class that can be used by depending modules, to facilitate the PDF Viewer usage.
@@ -148,6 +141,7 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
         intent.putExtra( "PDFAsset", path);
         intent.putExtra( "PDFPswd", password);
         intent.putExtra( "BMPFormat", bmpFormat);
+
         context.startActivity(intent);
     }
 
@@ -163,6 +157,7 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra( "PDFPath", path);
         intent.putExtra( "PDFPswd", password);
+
         context.startActivity(intent);
     }
 
@@ -276,48 +271,6 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
     }
 
     /**
-     * Returns a json object that contains all the document form fields dictionary without opening PDFView
-     *
-     * @return json object of all the document form fields dictionary (if-any), or ERROR otherwise
-     */
-    public String getJsonFormFieldsFromFile(String url) {
-        Document document = null;
-        String prefix = "file://";
-        int TEXT_FIELD = 3, WIDGET = 20;
-        String pdfPath = url.substring(url.indexOf(prefix) + prefix.length());
-        HashSet<String> formFields = new HashSet();
-        try {
-            document = new Document();
-            int res = document.Open(pdfPath, null);
-            if (res < 0) {
-                return null;
-            }
-            for (int i = 0 ; i < document.GetPageCount() ; i++) {
-                Page mPage = document.GetPage(i);
-                if (mPage != null) {
-                    mPage.ObjsStart();
-                    for (int j = 0; j < mPage.GetAnnotCount(); j++) {
-                        Page.Annotation mAnnotation = mPage.GetAnnot(j);
-                        if (mAnnotation != null  && mAnnotation.GetEditText() != null && (mAnnotation.GetType() == WIDGET || mAnnotation.GetType() == TEXT_FIELD)) {
-                            formFields.add(mAnnotation.GetEditText());
-                        }
-                    }
-                }
-            }
-        } finally {
-            if (document != null) {
-                document.Close();
-            }
-        }
-        if (formFields.size() > 0) {
-            Gson gson = new Gson();
-            return gson.toJson(formFields);
-        } else {
-            return RadaeePluginCallback.getInstance().onGetJsonFormFields();
-        }
-    }
-
-    /**
      * Returns a json object that contains a specific page's form fields dictionary
      *
      * @param pageno the page number, 0-index (from 0 to Document.GetPageCount - 1)
@@ -331,45 +284,10 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
      * Using the passed json, you can set the value of form fields like: Text fields, checkbox,
      * combo, radio buttons.
      *
-     * @param url form url
-     * @param codes smart fields json
+     * @param json object of the document form fields dictionary
      */
-    public String setFormFieldsWithJSON(String url, JSONObject codes) {
-        Document document = null;
-        String prefix = "file://";
-        String pdfPath = url.substring(url.indexOf(prefix) + prefix.length());
-        String result = null;
-        try {
-            document = new Document();
-            int res = document.Open(pdfPath, null);
-            if (res < 0) {
-                return null;
-            }
-            int pageCount = document.GetPageCount();
-            for (int i = 0; i < pageCount; i++) {
-                Page page = document.GetPage(i);
-                page.ObjsStart();
-                int annotCount = page.GetAnnotCount();
-                for (int j = 0; j < annotCount; j++) {
-                    Annotation annotation = page.GetAnnot(j);
-                    try {
-                        String replacement = codes.getString(annotation.GetEditText());
-                        if (replacement != null) {
-                            annotation.SetEditText(replacement);
-                        }
-                    } catch (JSONException e) {
-
-                    }
-                }
-            }
-            result = "Property set successfully.";
-        } finally {
-            if (document != null) {
-                document.Save();
-                document.Close();
-            }
-        }
-        return result;
+    public String setFormFieldsWithJSON(String json) {
+        return RadaeePluginCallback.getInstance().onSetFormFieldsWithJSON(json);
     }
 
     /**
@@ -500,6 +418,18 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
      */
     public String renderAnnotToFile(int page, int annotIndex, String renderPath, int bitmapWidth, int bitmapHeight) {
         return RadaeePluginCallback.getInstance().renderAnnotToFile(page, annotIndex, renderPath, bitmapWidth, bitmapHeight);
+    }
+
+    public boolean flatAnnotAtPage(int page) {
+        return RadaeePluginCallback.getInstance().flatAnnotAtPage(page);
+    }
+
+    public boolean flatAnnots() {
+        return RadaeePluginCallback.getInstance().flatAnnots();
+    }
+
+    public boolean saveDocumentToPath(String path) {
+        return RadaeePluginCallback.getInstance().saveDocumentToPath(path);
     }
 
     @Override
