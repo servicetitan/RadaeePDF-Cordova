@@ -26,6 +26,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.radaee.pdf.Document;
 import com.radaee.pdf.Global;
 import com.radaee.pdf.Page;
 import com.radaee.pdf.Page.Annotation;
@@ -70,6 +71,7 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
 	private int mNavigationMode = Global.navigationMode;
 	private RelativeLayout m_parent;
 	private PDFLayoutView m_view;
+	private String[][] m_original;
 	private PDFTopBar m_bar_act;
 	private PDFTopBar m_bar_cmd;
 	private PDFTopBar m_bar_find;
@@ -114,10 +116,11 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
 	private boolean m_set = false;
 	private PDFThumbView mThumbView;
 
-	public PDFViewController(RelativeLayout parent, PDFLayoutView view)
+	public PDFViewController(RelativeLayout parent, PDFLayoutView view, String[][] original)
 	{
 		m_parent = parent;
 		m_view = view;
+		m_original = original;
 		sFileState = NOT_MODIFIED;
 		m_bar_act = new PDFTopBar(m_parent, R.layout.bar_act);
 		m_bar_cmd = new PDFTopBar(m_parent, R.layout.bar_cmd);
@@ -827,7 +830,42 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
 		}
 	}
 
+	public void swapValues() {
+		Document document = m_view.PDFGetDoc();
+		int TEXT_FIELD = 3, WIDGET = 20;
+		int count = 0;
+		for (int i = 0; i < document.GetPageCount(); i++) {
+			Page mPage = document.GetPage(i);
+			if (mPage != null) {
+				mPage.ObjsStart();
+				for (int j = 0; j < mPage.GetAnnotCount(); j++) {
+					try {
+						Page.Annotation mAnnotation = mPage.GetAnnot(j);
+						String annotText = mAnnotation.GetEditText();
+
+						if ( mAnnotation != null &&
+							mAnnotation.GetEditText() != null &&
+							(mAnnotation.GetType() == WIDGET || mAnnotation.GetType() == TEXT_FIELD)) {
+
+								if (annotText.equals(m_original[count][1])) {
+									mAnnotation.SetEditText(m_original[count][0]);
+								}
+
+							count += 1;
+						}
+					} catch (Error e) {
+						throw new Error(e);
+					}
+				}
+			}
+		}
+	}
+
 	public void savePDF() {
+		if(m_original != null) {
+			swapValues();
+		}
+
 		m_view.PDFGetDoc().Save();
 		sFileState = MODIFIED_AND_SAVED;
 		Toast.makeText(m_parent.getContext(), R.string.saved_message, Toast.LENGTH_SHORT).show();

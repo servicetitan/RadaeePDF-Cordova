@@ -14,7 +14,8 @@ import com.radaee.pdf.Document;
 import com.radaee.pdf.Page.Annotation;
 
 import java.io.File;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.google.gson.Gson;
 import org.json.JSONException;
@@ -83,7 +84,7 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
      * @param password the pdf's password, if no apssword, pass empty string
      */
     public void show(Context context, String url, String password) {
-        show(context, url, password, false, false, 0, null, null);
+        show(context, url, password, false, false, 0, null, null, "");
     }
 
     /**
@@ -98,7 +99,7 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
      * @param bmpFormat bmp format, can be RGB_565 or ARGB_4444, default is ALPHA_8
      * @param author if not empty, it will be used to set annotations' author during creation.
      */
-    public void show(Context context, String url, String password, boolean readOnlyMode, boolean automaticSave, int gotoPage, String bmpFormat, String author) {
+    public void show(Context context, String url, String password, boolean readOnlyMode, boolean automaticSave, int gotoPage, String bmpFormat, String author, String originalValues) {
         if(!TextUtils.isEmpty(url)) {
             String name;
             if(URLUtil.isHttpUrl(url) || URLUtil.isHttpsUrl(url))
@@ -118,6 +119,7 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
             intent.putExtra("AUTOMATIC_SAVE", automaticSave);
             intent.putExtra("GOTO_PAGE", gotoPage);
             intent.putExtra( "BMPFormat", bmpFormat);
+            intent.putExtra( "ORIGINAL_VALUES", originalValues);
             context.startActivity(intent);
         } else
             Toast.makeText(context, context.getString(R.string.failed_invalid_path), Toast.LENGTH_SHORT).show();
@@ -285,7 +287,7 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
         String prefix = "file://";
         int TEXT_FIELD = 3, WIDGET = 20;
         String pdfPath = url.substring(url.indexOf(prefix) + prefix.length());
-        HashSet<String> formFields = new HashSet();
+        List<String> formFields = new ArrayList<String>();
         try {
             document = new Document();
             int res = document.Open(pdfPath, null);
@@ -355,7 +357,11 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
                     try {
                         String replacement = codes.getString(annotation.GetEditText());
                         if (replacement != null) {
-                            annotation.SetEditText(replacement);
+                            if(replacement.equals("null")) {
+                                annotation.SetEditText("");
+                            } else {
+                                annotation.SetEditText(replacement);
+                            }
                         }
                     } catch (JSONException e) {
 

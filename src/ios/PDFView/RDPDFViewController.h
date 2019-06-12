@@ -198,7 +198,7 @@
 
 -(IBAction)sliderValueChanged:(id)sender;
 -(IBAction)sliderDragUp:(id)sender;
--(int)PDFOpen:(NSString *)path :(NSString *)pwd atPage:(int)page readOnly:(BOOL)readOnlyEnabled autoSave:(BOOL)autoSaveEnabled;
+-(int)PDFOpen:(NSString *)path :(NSString *)pwd atPage:(int)page readOnly:(BOOL)readOnlyEnabled autoSave:(BOOL)autoSaveEnabled originalValues:(NSString *) originalValues;
 -(int)PDFOpenPage:(NSString *)path :(int)pageno : (float)x :(float)y :(NSString *)pwd;
 
 //for test
@@ -207,6 +207,7 @@
 
 //-(int)openStream:(id<PDFStream>)stream : (NSString *)password;
 -(void)PDFGoto:(int)pageno;
+-(void)swapValues;
 -(void)PDFClose;
 -(void)initbar :(int) pageno;
 -(BOOL)isPortrait;

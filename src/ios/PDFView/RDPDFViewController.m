@@ -26,6 +26,8 @@
     UITextField *textFd;
 	UIPopoverController *bookmarkPopover;
     NSString *password;
+    id originals;
+
     UIBarButtonItem *addBookMarkListButton;
     UIBarButtonItem *moreBarButton;
     
@@ -410,8 +412,14 @@ extern uint g_oval_color;
 {
     if ([m_view isModified] && !autoSave) {
         
+        NSString *message = @"Document modified.\r\nDo you want to save it?";
+
+        if(originals) {
+            message = @"If you have modified smart field data\nthese fields will no longer autofill on this job once you save changes.\nDo you wish to proceed?";
+        }
+
         UIAlertController* alert = [UIAlertController alertControllerWithTitle:@"Exiting"
-                                                                       message:@"Document modified.\r\nDo you want to save it?"
+                                                                       message:message
                                                                 preferredStyle:UIAlertControllerStyleAlert];
         
         UIAlertAction* ok = [UIAlertAction
@@ -419,6 +427,9 @@ extern uint g_oval_color;
                              style:UIAlertActionStyleDefault
                              handler:^(UIAlertAction * action)
                              {
+                                 if(originals) {
+                                     [self swapValues];
+                                 }
                                  [self PDFClose];
                                  [self.navigationController popViewControllerAnimated:YES];
                                  [self dismissViewControllerAnimated:YES completion:nil];
@@ -1135,14 +1146,17 @@ extern uint g_oval_color;
     }
 }
 
--(int)PDFOpen:(NSString *)path : (NSString *)pwd atPage:(int)page readOnly:(BOOL)readOnlyEnabled autoSave:(BOOL)autoSaveEnabled
+-(int)PDFOpen:(NSString *)path : (NSString *)pwd atPage:(int)page readOnly:(BOOL)readOnlyEnabled autoSave:(BOOL)autoSaveEnabled originalValues:(NSString *)originalValues
 {
     autoSave = autoSaveEnabled;
-    
+
     pdfPath = [path mutableCopy];
     pdfName = [[path lastPathComponent] mutableCopy];
     password = pwd;
     
+    NSData *data = [originalValues dataUsingEncoding:NSUTF8StringEncoding];
+    originals = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+
     [self PDFClose];
     PDF_ERR err = 0;
     m_doc = [[PDFDoc alloc] init];
@@ -1481,6 +1495,33 @@ extern uint g_oval_color;
     [m_view vGoto:_pagenow - 1];
     NSString *pagestr = [[NSString alloc]initWithFormat:@"%d/",_pagenow];
     pagestr = [pagestr stringByAppendingFormat:@"%d",_pagecount];
+}
+
+-(void)swapValues
+{
+    int TEXT_FIELD = 3, WIDGET = 20;
+    int pageCount = [m_doc pageCount];
+    int count = 0;
+    for (int i = 0; i < pageCount; i++) {
+        PDFPage *page = [m_doc page:i];
+        [page objsStart];
+        if ([page annotCount] > 0) {
+            int annotCount = [page annotCount];
+            for (int j = 0; j < annotCount; j++) {
+                PDFAnnot *annotation = [page annotAtIndex:j];
+                NSString *annotText = [annotation getEditText];
+
+                if (annotation && [annotation getEditText] && ([annotation type] == TEXT_FIELD || [annotation type] == WIDGET)) {
+
+                    if([annotText isEqualToString:originals[count][1]]) {
+                        [annotation setEditText:originals[count][0]];
+                    }
+
+                    count += 1;
+                }
+            }
+        }
+    }
 }
 
 -(void)PDFClose
