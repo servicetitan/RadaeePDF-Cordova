@@ -23,8 +23,5 @@
       "version": ">=3.0.0"
     }
   ],
-  "author": "Gear.it S.R.L.",
-  "dependencies": {
-    "q": "^1.5.1"
-  }
+  "author": "Gear.it S.R.L."
 }
