@@ -8,8 +8,7 @@ module.exports = function (ctx) {
         return;
     }
     var fs = require('fs'),
-        path = require('path'),
-        deferral = require('q').defer();
+        path = require('path');
 
     function replace_string_in_file(filename, to_replace, replace_with) {
         var data = fs.readFileSync(filename, 'utf8');
