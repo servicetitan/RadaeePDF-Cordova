@@ -207,7 +207,7 @@
 
 //-(int)openStream:(id<PDFStream>)stream : (NSString *)password;
 -(void)PDFGoto:(int)pageno;
--(void)swapValues;
+-(void)swapValues:(BOOL)toSmartCodes;
 -(void)PDFClose;
 -(void)initbar :(int) pageno;
 -(BOOL)isPortrait;

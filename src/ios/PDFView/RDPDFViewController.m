@@ -285,7 +285,14 @@ extern uint g_oval_color;
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    
+     
+    // Always adopt a light interface style for pdf editing.
+    if (@available(iOS 13, *)) {
+        if ([self respondsToSelector:NSSelectorFromString(@"overrideUserInterfaceStyle")]) {
+            [self setValue:@(UIUserInterfaceStyleLight) forKey:@"overrideUserInterfaceStyle"];
+        }
+    }
+
     PDFannot = [[PDFAnnot alloc] init];
     b_outline = false;
     b_findStart = NO;
@@ -428,7 +435,7 @@ extern uint g_oval_color;
                              handler:^(UIAlertAction * action)
                              {
                                  if(originals) {
-                                     [self swapValues];
+                                     [self swapValues:YES];
                                  }
                                  [self PDFClose];
                                  [self.navigationController popViewControllerAnimated:YES];
@@ -510,7 +517,6 @@ extern uint g_oval_color;
 - (IBAction)searchView:(id) sender
 {
     _searchToolBar = [UIToolbar new];
-    [_searchToolBar sizeToFit];
     
     UIBarButtonItem *searchButton=[[UIBarButtonItem alloc]initWithImage:_searchImage style:UIBarButtonItemStylePlain target:self action:@selector(showSearchList)];
     searchButton.width =30;
@@ -524,7 +530,7 @@ extern uint g_oval_color;
     NSArray *_toolBarItem = [[NSArray alloc]initWithObjects:searchButton,prevbutton,nextbutton,cancelbtn,nil];
     [_searchToolBar setItems:_toolBarItem animated:NO];
     [_toolBar addSubview:_searchToolBar];
-    
+    [_searchToolBar sizeToFit];
     
     CGRect boundsc = [self getReaderBounds];
     int cwidth = boundsc.size.width;
@@ -703,7 +709,6 @@ extern uint g_oval_color;
     }
     
     _drawLineToolBar = [UIToolbar new];
-    [_drawLineToolBar sizeToFit];
     //_drawLineToolBar.barStyle = UIBarStyleBlackOpaque;
     UIBarButtonItem *drawLineDoneBtn= [[UIBarButtonItem alloc] initWithImage:_doneImage style:UIBarButtonItemStylePlain target:self action:@selector(drawLineDone:)];
     drawLineDoneBtn.width =30;
@@ -717,7 +722,8 @@ extern uint g_oval_color;
     NSArray *_toolBarItem = [[NSArray alloc]initWithObjects:drawLineDoneBtn,spacer,drawLineCancelBtn,nil];
     [_drawLineToolBar setItems:_toolBarItem animated:NO];
     [_toolBar addSubview:_drawLineToolBar];
-    
+    [_drawLineToolBar sizeToFit];
+
     [self _toolBarStyle];
 }
 -(IBAction)drawLineDone:(id)sender
@@ -744,7 +750,6 @@ extern uint g_oval_color;
     }
     
     _drawRectToolBar = [UIToolbar new];
-    [_drawRectToolBar sizeToFit];
     UIBarButtonItem *drawLineDoneBtn=[[UIBarButtonItem alloc]initWithImage:_doneImage style:UIBarButtonItemStylePlain target:self action:@selector(drawRowDone)];
     drawLineDoneBtn.width =30;
     UIBarButtonItem *drawLineCancelBtn=[[UIBarButtonItem alloc]initWithImage:_removeImage style:UIBarButtonItemStylePlain target:self action:@selector(drawRowCancel)];
@@ -757,6 +762,7 @@ extern uint g_oval_color;
     NSArray *_toolBarItem = [[NSArray alloc]initWithObjects:drawLineDoneBtn,spacer,drawLineCancelBtn,nil];
     [_drawRectToolBar setItems:_toolBarItem animated:NO];
     [_toolBar addSubview:_drawRectToolBar];
+    [_drawRectToolBar sizeToFit];
     
     [self _toolBarStyle];
 }
@@ -787,7 +793,6 @@ extern uint g_oval_color;
     }
     
     _drawRectToolBar = [UIToolbar new];
-    [_drawRectToolBar sizeToFit];
     //_drawRectToolBar.barStyle = UIBarStyleBlackOpaque;
     UIBarButtonItem *drawLineDoneBtn= [[UIBarButtonItem alloc] initWithImage:_doneImage style:UIBarButtonItemStylePlain target:self action:@selector(drawRectDone:)];
     drawLineDoneBtn.width =30;
@@ -801,6 +806,7 @@ extern uint g_oval_color;
     NSArray *_toolBarItem = [[NSArray alloc]initWithObjects:drawLineDoneBtn,spacer,drawLineCancelBtn,nil];
     [_drawRectToolBar setItems:_toolBarItem animated:NO];
     [_toolBar addSubview:_drawRectToolBar];
+    [_drawRectToolBar sizeToFit];
     
     [self _toolBarStyle];
 }
@@ -829,7 +835,6 @@ extern uint g_oval_color;
     }
     
     _drawRectToolBar = [UIToolbar new];
-    [_drawRectToolBar sizeToFit];
     //_drawRectToolBar.barStyle = UIBarStyleBlackOpaque;
     UIBarButtonItem *drawLineDoneBtn= [[UIBarButtonItem alloc] initWithImage:_doneImage style:UIBarButtonItemStylePlain target:self action:@selector(drawEllipseDone:)];
     drawLineDoneBtn.width =30;
@@ -843,6 +848,7 @@ extern uint g_oval_color;
     NSArray *_toolBarItem = [[NSArray alloc]initWithObjects:drawLineDoneBtn,spacer,drawLineCancelBtn,nil];
     [_drawRectToolBar setItems:_toolBarItem animated:NO];
     [_toolBar addSubview:_drawRectToolBar];
+    [_drawRectToolBar sizeToFit];
     
     [self _toolBarStyle];
 }
@@ -871,7 +877,6 @@ extern uint g_oval_color;
     }
     
     _drawRectToolBar = [UIToolbar new];
-    [_drawRectToolBar sizeToFit];
     UIBarButtonItem *drawLineDoneBtn=[[UIBarButtonItem alloc]initWithImage:_doneImage style:UIBarButtonItemStylePlain target:self action:@selector(drawImageDone)];
     drawLineDoneBtn.width =30;
     UIBarButtonItem *drawLineCancelBtn=[[UIBarButtonItem alloc]initWithImage:_removeImage style:UIBarButtonItemStylePlain target:self action:@selector(drawImageCancel)];
@@ -884,6 +889,7 @@ extern uint g_oval_color;
     NSArray *_toolBarItem = [[NSArray alloc]initWithObjects:drawLineDoneBtn,spacer,drawLineCancelBtn,nil];
     [_drawRectToolBar setItems:_toolBarItem animated:NO];
     [_toolBar addSubview:_drawRectToolBar];
+    [_drawRectToolBar sizeToFit];
     
     [self _toolBarStyle];
 }
@@ -1497,10 +1503,12 @@ extern uint g_oval_color;
     pagestr = [pagestr stringByAppendingFormat:@"%d",_pagecount];
 }
 
--(void)swapValues
+-(void)swapValues:(BOOL)toSmartCodes
 {
     int TEXT_FIELD = 3, WIDGET = 20;
     int pageCount = [m_doc pageCount];
+    int smartCodeIndex = 0;
+    int smartValueIndex = 1;
     int count = 0;
     for (int i = 0; i < pageCount; i++) {
         PDFPage *page = [m_doc page:i];
@@ -1513,8 +1521,8 @@ extern uint g_oval_color;
 
                 if (annotation && [annotation getEditText] && ([annotation type] == TEXT_FIELD || [annotation type] == WIDGET)) {
 
-                    if([annotText isEqualToString:originals[count][1]]) {
-                        [annotation setEditText:originals[count][0]];
+                    if([annotText isEqualToString:originals[count][toSmartCodes ? smartValueIndex : smartCodeIndex]]) {
+                        [annotation setEditText:originals[count][toSmartCodes ? smartCodeIndex : smartValueIndex]];
                     }
 
                     count += 1;
@@ -1836,7 +1844,6 @@ extern uint g_oval_color;
 -(void)addannotToolBar
 {
     annotToolBar = [UIToolbar new];
-    [annotToolBar sizeToFit];
     //annotToolBar.barStyle = UIBarStyleBlackOpaque;
     
     UIBarButtonItem *playbutton= [[UIBarButtonItem alloc] initWithImage:_performImage style:UIBarButtonItemStylePlain target:self action:@selector(performAnnot)];
@@ -1849,6 +1856,7 @@ extern uint g_oval_color;
     NSArray *_toolBarItem = [[NSArray alloc]initWithObjects:playbutton,deletebutton,cancelbtn,nil];
     [annotToolBar setItems:_toolBarItem animated:NO];
     [_toolBar addSubview:annotToolBar];
+    [annotToolBar sizeToFit];
     
     [self _toolBarStyle];
 }
@@ -2658,13 +2666,60 @@ extern uint g_oval_color;
 
 #pragma mark - Save
 
-- (void)savePdf
+- (void)doSavePdf
 {
     if([m_view forceSave])
     {
-        UIAlertController* alert = [UIAlertController alertControllerWithTitle:@"Notice"
-                                                                       message:@"Document saved"
-                                                                preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertController* alert = [UIAlertController 
+                                    alertControllerWithTitle:@"Notice"
+                                    message:@"Document saved"
+                                    preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction* ok = [UIAlertAction
+                             actionWithTitle:@"OK"
+                             style:UIAlertActionStyleDefault
+                             handler:nil];
+        [alert addAction:ok];
+        [self presentViewController:alert animated:YES completion:nil];
+    }
+}
+
+- (void)savePdf
+{
+    UIAlertController* alert = nil;
+
+    if ([m_view isModified]) {
+        if(originals) {
+            NSString *message = @"If you have modified smart field data\nthese fields will no longer autofill on this job once you save changes.\nDo you wish to proceed?";
+            alert = [UIAlertController alertControllerWithTitle:@"Saving" 
+                                        message:message 
+                                        preferredStyle:UIAlertControllerStyleAlert];
+            UIAlertAction* ok = [UIAlertAction
+                                actionWithTitle:@"Yes"
+                                style:UIAlertActionStyleDefault
+                                handler:^(UIAlertAction * action)
+                                {
+                                    [self swapValues:YES];
+                                    [self doSavePdf];
+                                    [self swapValues:NO];
+                                    [alert dismissViewControllerAnimated:YES completion:nil];
+                                }];
+            UIAlertAction* cancel = [UIAlertAction
+                                    actionWithTitle:@"No"
+                                    style:UIAlertActionStyleDefault
+                                    handler:nil];
+                                            
+            [alert addAction:ok];
+            [alert addAction:cancel];
+            [self presentViewController:alert animated:YES completion:nil];
+        }
+        else {
+            [self doSavePdf];
+        }
+    }
+    else {
+        alert = [UIAlertController alertControllerWithTitle:@"Notice"
+                    message:@"No changes to save"
+                    preferredStyle:UIAlertControllerStyleAlert];
         
         UIAlertAction* ok = [UIAlertAction
                              actionWithTitle:@"OK"
@@ -2673,6 +2728,7 @@ extern uint g_oval_color;
         [alert addAction:ok];
         [self presentViewController:alert animated:YES completion:nil];
     }
+    
 }
 
 #pragma mark - Attachments

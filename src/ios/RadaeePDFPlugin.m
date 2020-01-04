@@ -462,7 +462,7 @@
     }
     
     [navController.navigationBar setTranslucent:NO];
-    
+    [navController setModalPresentationStyle:UIModalPresentationFullScreen];
     [self.viewController presentViewController:navController animated:YES completion:nil];
 }
 

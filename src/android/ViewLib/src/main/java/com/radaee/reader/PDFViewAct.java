@@ -269,7 +269,7 @@ public class PDFViewAct extends Activity implements PDFLayoutListener {
         if (m_controller == null || m_controller.OnBackPressed()) {
             if (getFileState() == PDFViewController.MODIFIED_NOT_SAVED) {
                 if (getIntent().getBooleanExtra("AUTOMATIC_SAVE", false)) {
-                    m_controller.savePDF();
+                    m_controller.savePDF(false);
                     super.onBackPressed();
                 } else {
                     TextView txtView = new TextView(this);
@@ -283,7 +283,7 @@ public class PDFViewAct extends Activity implements PDFLayoutListener {
                             txtView).setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            m_controller.savePDF();
+                            m_controller.savePDF(false);
                             PDFViewAct.super.onBackPressed();
                         }
                     }).setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {

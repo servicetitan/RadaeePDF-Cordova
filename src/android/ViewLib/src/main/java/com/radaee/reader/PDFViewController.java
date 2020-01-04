@@ -549,7 +549,7 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
         } else if(arg0 == btn_more) {
 			m_menu_more.MenuShow(m_view.getWidth() - m_menu_more.getWidth(), m_bar_cmd.BarGetHeight());
 		} else if(arg0 == btn_save) {
-			savePDF();
+			savePDF(true);
 			m_menu_more.MenuDismiss();
 		} else if(arg0 == btn_print) {
 			printPDF();
@@ -830,10 +830,12 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
 		}
 	}
 
-	public void swapValues() {
+	public void swapValues(boolean toSmartCodes) {
 		Document document = m_view.PDFGetDoc();
 		int TEXT_FIELD = 3, WIDGET = 20;
-		int count = 0;
+        int count = 0;
+        int smartCodeIndex = 0;
+        int smartValueIndex = 1;
 		for (int i = 0; i < document.GetPageCount(); i++) {
 			Page mPage = document.GetPage(i);
 			if (mPage != null) {
@@ -847,8 +849,8 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
 							mAnnotation.GetEditText() != null &&
 							(mAnnotation.GetType() == WIDGET || mAnnotation.GetType() == TEXT_FIELD)) {
 
-								if (annotText.equals(m_original[count][1])) {
-									mAnnotation.SetEditText(m_original[count][0]);
+								if (annotText.equals(m_original[count][toSmartCodes ? smartValueIndex : smartCodeIndex])) {
+									mAnnotation.SetEditText(m_original[count][toSmartCodes ? smartCodeIndex : smartValueIndex]);
 								}
 
 							count += 1;
@@ -861,12 +863,17 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
 		}
 	}
 
-	public void savePDF() {
+	public void savePDF(boolean reapplySmartValues) {
 		if(m_original != null) {
-			swapValues();
+			swapValues(true);
 		}
 
-		m_view.PDFGetDoc().Save();
+        m_view.PDFGetDoc().Save();
+        
+        if(m_original != null && reapplySmartValues) {
+            swapValues(false);
+        }
+
 		sFileState = MODIFIED_AND_SAVED;
 		Toast.makeText(m_parent.getContext(), R.string.saved_message, Toast.LENGTH_SHORT).show();
 	}
