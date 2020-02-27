@@ -93,7 +93,7 @@ extern uint annotStrikeoutColor;
 -(void)erase:(int)color
 {
 	int *pix = (int *)Global_dibGetData(m_dib);
-	int *pix_end = pix + Global_dibGetWidth(m_dib) * Global_dibGetHeight(m_dib) * 4;
+	int *pix_end = pix + Global_dibGetWidth(m_dib) * Global_dibGetHeight(m_dib);
 	while(pix < pix_end) *pix++ = color;
 }
 
