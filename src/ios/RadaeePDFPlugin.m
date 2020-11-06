@@ -82,7 +82,7 @@
                 filePath = [documentsDirectory stringByAppendingPathComponent:filePath];
             }
             
-            [self openPdf:filePath atPage:[[params objectForKey:@"gotoPage"] intValue] withPassword:[params objectForKey:@"password"] readOnly:[[params objectForKey:@"readOnlyMode"] boolValue] autoSave:[[params objectForKey:@"automaticSave"] boolValue]];
+            [self openPdf:filePath atPage:[[params objectForKey:@"gotoPage"] intValue] withPassword:[params objectForKey:@"password"] readOnly:[[params objectForKey:@"readOnlyMode"] boolValue] autoSave:[[params objectForKey:@"automaticSave"] boolValue] originalValues:[params objectForKey:@"originalValues"]];
         } else {
             [self openFromPath:command];
         }
@@ -101,7 +101,7 @@
     
     NSString *filePath = [[NSBundle mainBundle] pathForResource:url ofType:nil];
 
-    [self openPdf:filePath atPage:[[params objectForKey:@"gotoPage"] intValue] withPassword:[params objectForKey:@"password"] readOnly:[[params objectForKey:@"readOnlyMode"] boolValue] autoSave:[[params objectForKey:@"automaticSave"] boolValue]];
+    [self openPdf:filePath atPage:[[params objectForKey:@"gotoPage"] intValue] withPassword:[params objectForKey:@"password"] readOnly:[[params objectForKey:@"readOnlyMode"] boolValue] autoSave:[[params objectForKey:@"automaticSave"] boolValue] originalValues:[params objectForKey:@"originalValues"]];
 }
 
 - (void)openFromPath:(CDVInvokedUrlCommand *)command
@@ -113,10 +113,15 @@
     
     NSString *filePath = url;
     
-    [self openPdf:filePath atPage:[[params objectForKey:@"gotoPage"] intValue] withPassword:[params objectForKey:@"password"] readOnly:[[params objectForKey:@"readOnlyMode"] boolValue] autoSave:[[params objectForKey:@"automaticSave"] boolValue]];
+    [self openPdf:filePath atPage:[[params objectForKey:@"gotoPage"] intValue] withPassword:[params objectForKey:@"password"] readOnly:[[params objectForKey:@"readOnlyMode"] boolValue] autoSave:[[params objectForKey:@"automaticSave"] boolValue] originalValues:[params objectForKey:@"originalValues"]];
 }
 
 - (void)openPdf:(NSString *)filePath atPage:(int)page withPassword:(NSString *)password readOnly:(BOOL)readOnly autoSave:(BOOL)autoSave
+{
+    [self openPdf:filePath atPage:page withPassword:password readOnly:readOnly autoSave:autoSave originalValues:@""];
+}
+
+- (void)openPdf:(NSString *)filePath atPage:(int)page withPassword:(NSString *)password readOnly:(BOOL)readOnly autoSave:(BOOL)autoSave originalValues:(NSString *)originalValues
 {
     NSLog(@"File Path: %@", filePath);
     if (![[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
@@ -129,8 +134,12 @@
     [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithInt:0] forKey:@"fileStat"];
     
     [self readerInit];
+
+    if(originalValues == NULL) {
+        originalValues = @"";
+    }
     
-    int result = [m_pdf PDFOpen:filePath :password atPage:page readOnly:readOnly autoSave:autoSave];
+    int result = [m_pdf PDFOpen:filePath :password atPage:page readOnly:readOnly autoSave:autoSave originalValues:originalValues];
     
     NSLog(@"%d", result);
     if(result != err_ok && result != err_open){
@@ -453,7 +462,7 @@
     }
     
     [navController.navigationBar setTranslucent:NO];
-    
+    [navController setModalPresentationStyle:UIModalPresentationFullScreen];
     [self.viewController presentViewController:navController animated:YES completion:nil];
 }
 
@@ -936,7 +945,7 @@
         RDFormManager *fe = [[RDFormManager alloc] init];
         [self readerInit];
         @try {
-            [m_pdf PDFOpen:url :NULL atPage:0 readOnly:true autoSave:false];
+            [m_pdf PDFOpen:url :NULL atPage:0 readOnly:true autoSave:false originalValues:@""];
             NSString *result = [fe jsonInfoForAllPages:[m_pdf getDoc]];
             if (!result) {
                 [self cdvErrorWithMessage:@"JSON property get failed"];
@@ -973,7 +982,7 @@
         RDFormManager *fe = [[RDFormManager alloc] init];
         [self readerInit];
         @try {
-            [m_pdf PDFOpen:url :NULL atPage:0 readOnly:false autoSave:true];
+            [m_pdf PDFOpen:url :NULL atPage:0 readOnly:false autoSave:true originalValues:@""];
             [fe setInfoWithJson:[m_pdf getDoc] codes:[params objectForKey:@"codes"] error:&error];
             if (error) {
                 [self cdvErrorWithMessage:[error description]];
@@ -1173,4 +1182,3 @@
 }
 
 @end
-

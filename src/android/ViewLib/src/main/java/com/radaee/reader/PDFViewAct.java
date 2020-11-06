@@ -23,6 +23,8 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.radaee.pdf.Document;
 import com.radaee.pdf.Global;
 import com.radaee.pdf.Page.Annotation;
@@ -31,8 +33,11 @@ import com.radaee.util.PDFAssetStream;
 import com.radaee.util.PDFHttpStream;
 import com.radaee.util.RadaeePluginCallback;
 import com.radaee.view.PDFLayout;
+import com.radaee.view.PDFView;
 import com.radaee.view.VPage;
 import com.radaee.viewlib.R;
+
+import java.lang.reflect.Type;
 
 public class PDFViewAct extends Activity implements PDFLayoutListener {
     private String mFindQuery = "";
@@ -46,6 +51,7 @@ public class PDFViewAct extends Activity implements PDFLayoutListener {
     private PDFLayoutView m_view = null;
     private PDFViewController m_controller = null;
     private boolean need_save_doc = false;
+    private String[][] m_original = null;
 
     private void onFail(String msg)//treat open failed.
     {
@@ -118,7 +124,15 @@ public class PDFViewAct extends Activity implements PDFLayoutListener {
         protected void onPostExecute(Integer integer) {
             m_view.PDFOpen(m_doc, PDFViewAct.this);
             m_view.setReadOnly(getIntent().getBooleanExtra("READ_ONLY", false));
-            m_controller = new PDFViewController(m_layout, m_view);
+
+            String stringValues = getIntent().getStringExtra("ORIGINAL_VALUES");
+            Gson gson = new Gson();
+            Type collectionType = new TypeToken<String[][]>(){}.getType();
+            m_original = gson.fromJson(stringValues, collectionType);
+
+            m_controller = new PDFViewController(m_layout, m_view, m_original);
+            need_save_doc = need_save;
+
             need_save_doc = need_save;
             if (dlg != null)
                 dlg.dismiss();
@@ -244,7 +258,7 @@ public class PDFViewAct extends Activity implements PDFLayoutListener {
         if (m_doc == null) {
             m_doc = Document.BundleRestore(savedInstanceState);//restore Document object
             m_view.PDFOpen(m_doc, this);
-            m_controller = new PDFViewController(m_layout, m_view);
+            m_controller = new PDFViewController(m_layout, m_view, m_original);
             need_save_doc = true;
         }
         m_view.BundleRestorePos(savedInstanceState);
@@ -255,16 +269,21 @@ public class PDFViewAct extends Activity implements PDFLayoutListener {
         if (m_controller == null || m_controller.OnBackPressed()) {
             if (getFileState() == PDFViewController.MODIFIED_NOT_SAVED) {
                 if (getIntent().getBooleanExtra("AUTOMATIC_SAVE", false)) {
-                    m_controller.savePDF();
+                    m_controller.savePDF(false);
                     super.onBackPressed();
                 } else {
                     TextView txtView = new TextView(this);
-                    txtView.setText(R.string.save_msg);
+                    if(m_original == null) {
+                        txtView.setText(R.string.save_msg);
+                    }
+                    else {
+                        txtView.setText(R.string.save_smart_msg);
+                    }
                     new AlertDialog.Builder(this).setTitle(R.string.exiting).setView(
                             txtView).setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            m_controller.savePDF();
+                            m_controller.savePDF(false);
                             PDFViewAct.super.onBackPressed();
                         }
                     }).setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {

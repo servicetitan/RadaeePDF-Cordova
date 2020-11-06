@@ -748,6 +748,8 @@ extern NSString *g_author;
 -(BOOL)forceSave
 {
     if ([m_doc save]) {
+        //Mark file status as modified and saved 
+        [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithInt:2] forKey:@"fileStat"];
         [self setModified:NO force:YES];
         return YES;
     }
@@ -2502,7 +2504,14 @@ extern NSString *g_author;
         m_modified = modified;
     }
     
-    if (m_modified) {
+    // Since we are allowing incremental saving of the pdf now, once the file
+    // has gone into a "modified and saved" state (fileStat == 2) we need
+    // to remember this file state until the editing session ends because
+    // we only use the updated PDF from the edit session when the file state
+    // exits in a "Modifed and saved" state
+    BOOL alreadyModifiedAndSavedBefore = [[NSUserDefaults standardUserDefaults] integerForKey:@"fileStat"] == 2;
+
+    if (m_modified && !alreadyModifiedAndSavedBefore) {
         [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithInt:1] forKey:@"fileStat"];
     }
 }

@@ -51,7 +51,12 @@
             NSString *code = [annotation getEditText];
             NSString *replacement = [codes objectForKey:code];
             if (replacement) {
-                [annotation setEditText:replacement];
+                if([replacement isEqualToString:@"null"]) {
+                    [annotation setEditText:@""];
+                }
+                else {
+                    [annotation setEditText:replacement];
+                }
             }
         }
         page = nil;
@@ -266,16 +271,16 @@
         return @"Document not set";
     }
     
-    NSSet *set = [self allFormFields:document];
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:[set allObjects] options:NSJSONWritingPrettyPrinted error:nil];
+    NSMutableArray *array = [self allFormFields:document];
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:array options:NSJSONWritingPrettyPrinted error:nil];
     NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
     return jsonString;
 }
 
 //Get annotations info for all pages
-- (NSSet *)allFormFields:(PDFDoc *)document
+- (NSMutableArray *)allFormFields:(PDFDoc *)document
 {
-    NSMutableSet *set = [NSMutableSet set];
+    NSMutableArray *array = [[NSMutableArray alloc]init];
     int TEXT_FIELD = 3, WIDGET = 20;
     int pageCount = [document pageCount];
     for (int i = 0; i < pageCount; i++) {
@@ -286,12 +291,12 @@
             for (int j = 0; j < annotCount; j++) {
                 PDFAnnot *annotation = [page annotAtIndex:j];
                 if (annotation && [annotation getEditText] && ([annotation type] == TEXT_FIELD || [annotation type] == WIDGET)) {
-                    [set addObject:[annotation getEditText]];
+                    [array addObject:[annotation getEditText]];
                 }
             }
         }
     }
-    return set;
+    return array;
 }
 
 //Get annotations info for a single page
