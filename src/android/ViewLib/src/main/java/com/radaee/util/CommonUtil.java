@@ -19,8 +19,8 @@ import com.radaee.pdf.PageContent;
 import com.radaee.pdf.ResImage;
 import com.radaee.pdf.adv.Obj;
 import com.radaee.pdf.adv.Ref;
-import com.radaee.reader.PDFLayoutView;
-import com.servicetitan.mobile.R;
+import com.radaee.view.ILayoutView;
+import com.radaee.viewlib.R;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -189,9 +189,13 @@ public class CommonUtil {
 
                         mAnnotInfoJson.put("SignStatus", mAnnotation.GetSignStatus());
 
+                        mAnnotInfoJson.put("ReadOnly", (mAnnotation.IsReadOnly()) ? 1 : 0);
+                        mAnnotInfoJson.put("Locked", (mAnnotation.IsLocked()) ? 1 : 0);
+
                         mPagesAnnot.put(mAnnotInfoJson);
                     }
                 }
+
                 if (mPagesAnnot.length() > 0) {
                     JSONObject mPageJson = new JSONObject();
                     mPageJson.put("Page", index);
@@ -257,6 +261,12 @@ public class CommonUtil {
                                     }
                                     break;
                             }
+                            //readonly
+                            if(!mAnnotInfo.isNull("ReadOnly"))
+                                mAnnotation.SetReadOnly((mAnnotInfo.getInt("ReadOnly") == 1) ? true : false);
+                            //locked
+                            if(!mAnnotInfo.isNull("Locked"))
+                                mAnnotation.SetLocked((mAnnotInfo.getInt("Locked") == 1) ? true : false);
                         }
                     }
                     mPage.Close();
@@ -268,7 +278,7 @@ public class CommonUtil {
         }
     }
 
-    public static void showPDFOutlines(final PDFLayoutView mPdfLayoutView, Context mContext) {
+    public static void showPDFOutlines(final ILayoutView mPdfLayoutView, Context mContext) {
         if (mPdfLayoutView.PDFGetDoc() != null) {
             if (mPdfLayoutView.PDFGetDoc().GetOutlines() == null) {
                 Toast.makeText(mContext, R.string.no_pdf_outlines, Toast.LENGTH_SHORT).show();
@@ -456,5 +466,9 @@ public class CommonUtil {
         } else result = "Cannot get indicated page";
 
         return result;
+    }
+
+    public static int dp2px(Context context, float dpValue) {
+        return (int)(dpValue * context.getResources().getDisplayMetrics().density);
     }
 }

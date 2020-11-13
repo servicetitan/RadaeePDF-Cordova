@@ -8,18 +8,11 @@ import android.widget.Toast;
 
 import com.radaee.pdf.Global;
 import com.radaee.pdf.Page;
+import com.radaee.reader.PDFGLViewAct;
 import com.radaee.reader.PDFViewAct;
-import com.servicetitan.mobile.R;
-import com.radaee.pdf.Document;
-import com.radaee.pdf.Page.Annotation;
+import com.radaee.viewlib.R;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.google.gson.Gson;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 /**
  * A class that can be used by depending modules, to facilitate the PDF Viewer usage.
@@ -32,10 +25,16 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
     private int mCurrentPage = -1;
     private int mIconsBgColor = -1;
     private int mTitleBgColor = -1;
+
+    private int mLayoutType = CPU_BASED_LAYOUT;
+    public static final int GPU_BASED_LAYOUT = 0;
+    public static final int CPU_BASED_LAYOUT = 1;
+
     public static boolean sHideSaveButton = false;
     public static boolean sHideMoreButton = false;
     public static boolean sHideUndoButton = false;
     public static boolean sHideRedoButton = false;
+    public static boolean sHideShareButton = false;
     public static boolean sHidePrintButton = false;
     public static boolean sHideAnnotButton = false;
     public static boolean sHideSelectButton = false;
@@ -81,10 +80,11 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
      *
      * @param context the current context.
      * @param url the url can be remote (starts with http/https), or local
-     * @param password the pdf's password, if no apssword, pass empty string
+     * @param password the pdf's password, if no password, pass empty string
      */
     public void show(Context context, String url, String password) {
-        show(context, url, password, false, false, 0, null, null, "");
+        show(context, url, password, false, false, 0, null,
+                null, mLayoutType);
     }
 
     /**
@@ -92,14 +92,17 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
      *
      * @param context the current context.
      * @param url the url can be remote (starts with http/https), or local
-     * @param password the pdf's password, if no apssword, pass empty string
+     * @param password the pdf's password, if no password, pass empty string
      * @param readOnlyMode if true, the document will be opened in read-only mode
      * @param automaticSave if true, the modifications will be saved automatically, else a requester to save will be shown
      * @param gotoPage if greater than 0, the reader will render directly the passed page (0-index: from 0 to Document.GetPageCount - 1)
      * @param bmpFormat bmp format, can be RGB_565 or ARGB_4444, default is ALPHA_8
      * @param author if not empty, it will be used to set annotations' author during creation.
+     * @param layoutType determine the type of the layout to be used for rendering, (GPU or CPU) based layout, GPU_BASED_LAYOUT:0 (OpenGL), CPU_BASED_LAYOUT:1
      */
-    public void show(Context context, String url, String password, boolean readOnlyMode, boolean automaticSave, int gotoPage, String bmpFormat, String author, String originalValues) {
+    public void show(Context context, String url, String password, boolean readOnlyMode, boolean automaticSave,
+                     int gotoPage, String bmpFormat, String author, int layoutType) {
+        mLayoutType = layoutType;
         if(!TextUtils.isEmpty(url)) {
             String name;
             if(URLUtil.isHttpUrl(url) || URLUtil.isHttpsUrl(url))
@@ -111,7 +114,7 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
             } else
                 name = "PDFPath";
             Global.sAnnotAuthor = author;
-            Intent intent = new Intent(context, PDFViewAct.class);
+            Intent intent = new Intent(context, mLayoutType == GPU_BASED_LAYOUT ? PDFGLViewAct.class : PDFViewAct.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             intent.putExtra( name, url);
             intent.putExtra( "PDFPswd", password);
@@ -119,7 +122,6 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
             intent.putExtra("AUTOMATIC_SAVE", automaticSave);
             intent.putExtra("GOTO_PAGE", gotoPage);
             intent.putExtra( "BMPFormat", bmpFormat);
-            intent.putExtra( "ORIGINAL_VALUES", originalValues);
             context.startActivity(intent);
         } else
             Toast.makeText(context, context.getString(R.string.failed_invalid_path), Toast.LENGTH_SHORT).show();
@@ -130,7 +132,7 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
      *
      * @param context the current context.
      * @param path the asset name/path
-     * @param password the pdf's password, if no apssword, pass empty string
+     * @param password the pdf's password, if no password, pass empty string
      */
     public void openFromAssets(Context context, String path, String password) {
         openFromAssets(context, path, password, null);
@@ -141,15 +143,16 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
      *
      * @param context the current context.
      * @param path the asset name/path
-     * @param password the pdf's password, if no apssword, pass empty string
+     * @param password the pdf's password, if no password, pass empty string
      * @param bmpFormat bmp format, can be RGB_565 or ARGB_4444, default is ALPHA_8
      */
     public void openFromAssets(Context context, String path, String password, String bmpFormat) {
-        Intent intent = new Intent(context, PDFViewAct.class);
+        Intent intent = new Intent(context, mLayoutType == GPU_BASED_LAYOUT ? PDFGLViewAct.class : PDFViewAct.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra( "PDFAsset", path);
         intent.putExtra( "PDFPswd", password);
         intent.putExtra( "BMPFormat", bmpFormat);
+
         context.startActivity(intent);
     }
 
@@ -158,13 +161,16 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
      *
      * @param context the current context.
      * @param path the pdf file path
-     * @param password the pdf's password, if no apssword, pass empty string
+     * @param password the pdf's password, if no password, pass empty string
+     * @param layoutType determine the type of the layout to be used for rendering, (GPU or CPU) based layout, GPU_BASED_LAYOUT:0 (OpenGL), CPU_BASED_LAYOUT:1
      */
-    public void openFromPath(Context context, String path, String password) {
-        Intent intent = new Intent(context, PDFViewAct.class);
+    public void openFromPath(Context context, String path, String password, int layoutType) {
+        mLayoutType = layoutType;
+        Intent intent = new Intent(context, mLayoutType == GPU_BASED_LAYOUT ? PDFGLViewAct.class : PDFViewAct.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra( "PDFPath", path);
         intent.putExtra( "PDFPswd", password);
+
         context.startActivity(intent);
     }
 
@@ -172,7 +178,7 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
      * Changes the Reader's view mode
      * Should be called before show, open methods
      *
-     * @param viewMode 0:vertical 3:single 4:dual 6:Dual with cover(1st page single)
+     * @param viewMode 0:vertical 3:single 4:Dual 6:Dual with cover(1st page single)
      */
     public void setReaderViewMode(int viewMode) {
         mViewMode = viewMode;
@@ -225,8 +231,15 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
      * @param firstPageCover if true the first page will be single, if false it will be dual (same as view_mode = 4)
      */
     public void setFirstPageCover(boolean firstPageCover) {
-        if(!firstPageCover)
-            mViewMode = 4;
+        mViewMode = firstPageCover ? 6 : 4;
+    }
+
+    /**
+     * determine the type of the layout to be used for rendering, (GPU or CPU) based layout
+     * @param layoutType GPU_BASED_LAYOUT:0 (OpenGL), CPU_BASED_LAYOUT:1
+     */
+    public void setLayoutType(int layoutType) {
+        mLayoutType = layoutType;
     }
 
     /**
@@ -278,48 +291,6 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
     }
 
     /**
-     * Returns a json object that contains all the document form fields dictionary without opening PDFView
-     *
-     * @return json object of all the document form fields dictionary (if-any), or ERROR otherwise
-     */
-    public String getJsonFormFieldsFromFile(String url) {
-        Document document = null;
-        String prefix = "file://";
-        int TEXT_FIELD = 3, WIDGET = 20;
-        String pdfPath = url.substring(url.indexOf(prefix) + prefix.length());
-        List<String> formFields = new ArrayList<String>();
-        try {
-            document = new Document();
-            int res = document.Open(pdfPath, null);
-            if (res < 0) {
-                return null;
-            }
-            for (int i = 0 ; i < document.GetPageCount() ; i++) {
-                Page mPage = document.GetPage(i);
-                if (mPage != null) {
-                    mPage.ObjsStart();
-                    for (int j = 0; j < mPage.GetAnnotCount(); j++) {
-                        Page.Annotation mAnnotation = mPage.GetAnnot(j);
-                        if (mAnnotation != null  && mAnnotation.GetEditText() != null && (mAnnotation.GetType() == WIDGET || mAnnotation.GetType() == TEXT_FIELD)) {
-                            formFields.add(mAnnotation.GetEditText());
-                        }
-                    }
-                }
-            }
-        } finally {
-            if (document != null) {
-                document.Close();
-            }
-        }
-        if (formFields.size() > 0) {
-            Gson gson = new Gson();
-            return gson.toJson(formFields);
-        } else {
-            return RadaeePluginCallback.getInstance().onGetJsonFormFields();
-        }
-    }
-
-    /**
      * Returns a json object that contains a specific page's form fields dictionary
      *
      * @param pageno the page number, 0-index (from 0 to Document.GetPageCount - 1)
@@ -333,49 +304,10 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
      * Using the passed json, you can set the value of form fields like: Text fields, checkbox,
      * combo, radio buttons.
      *
-     * @param url form url
-     * @param codes smart fields json
+     * @param json object of the document form fields dictionary
      */
-    public String setFormFieldsWithJSON(String url, JSONObject codes) {
-        Document document = null;
-        String prefix = "file://";
-        String pdfPath = url.substring(url.indexOf(prefix) + prefix.length());
-        String result = null;
-        try {
-            document = new Document();
-            int res = document.Open(pdfPath, null);
-            if (res < 0) {
-                return null;
-            }
-            int pageCount = document.GetPageCount();
-            for (int i = 0; i < pageCount; i++) {
-                Page page = document.GetPage(i);
-                page.ObjsStart();
-                int annotCount = page.GetAnnotCount();
-                for (int j = 0; j < annotCount; j++) {
-                    Annotation annotation = page.GetAnnot(j);
-                    try {
-                        String replacement = codes.getString(annotation.GetEditText());
-                        if (replacement != null) {
-                            if(replacement.equals("null")) {
-                                annotation.SetEditText("");
-                            } else {
-                                annotation.SetEditText(replacement);
-                            }
-                        }
-                    } catch (JSONException e) {
-
-                    }
-                }
-            }
-            result = "Property set successfully.";
-        } finally {
-            if (document != null) {
-                document.Save();
-                document.Close();
-            }
-        }
-        return result;
+    public String setFormFieldsWithJSON(String json) {
+        return RadaeePluginCallback.getInstance().onSetFormFieldsWithJSON(json);
     }
 
     /**
@@ -495,6 +427,44 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
         return RadaeePluginCallback.getInstance().onAddAnnotAttachment(attachmentPath);
     }
 
+
+    public String getTextAnnotationDetails(int page) {
+        return RadaeePluginCallback.getInstance().onGetTextAnnotationDetails(page);
+    }
+
+    public String getMarkupAnnotationDetails(int page) {
+        return RadaeePluginCallback.getInstance().onGetMarkupAnnotationDetails(page);
+    }
+
+    public int getCharIndex(int page, float x,float y) {
+        return RadaeePluginCallback.getInstance().onGetCharIndex(page, x,y);
+    }
+
+    public void addTextAnnotation(int page, float x,float y, String text, String subject) {
+        RadaeePluginCallback.getInstance().onAddTextAnnotation(page,x,y,text,subject);
+    }
+
+    public void addMarkupAnnotation(int page, int type, int index1, int index2) {
+        RadaeePluginCallback.getInstance().onAddMarkupAnnotation(page,type,index1,index2);
+    }
+
+    public String getPDFCoordinates(int x, int y) {
+        return RadaeePluginCallback.getInstance().onGetPDFCoordinates(x,y);
+    }
+
+    public String getScreenCoordinates(int pageno, float x, float y) {
+        return RadaeePluginCallback.getInstance().onGetScreenCoordinates(pageno, x,y);
+    }
+
+    public String getPDFRect(int left, int top, int right, int bottom) {
+        return RadaeePluginCallback.getInstance().onGetPDFRect(left,top,right,bottom);
+    }
+
+    public String getScreenRect(int pageno, float left, float top, float right, float bottom) {
+        return RadaeePluginCallback.getInstance().onGetScreenRect(pageno,left,top,right,bottom);
+    }
+
+
     /**
      * Render annot to a bitmap, and save it to the given path
      * @param page the page number, 0-index (from 0 to Document.GetPageCount - 1)
@@ -506,6 +476,26 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
      */
     public String renderAnnotToFile(int page, int annotIndex, String renderPath, int bitmapWidth, int bitmapHeight) {
         return RadaeePluginCallback.getInstance().renderAnnotToFile(page, annotIndex, renderPath, bitmapWidth, bitmapHeight);
+    }
+
+    public boolean flatAnnotAtPage(int page) {
+        return RadaeePluginCallback.getInstance().flatAnnotAtPage(page);
+    }
+
+    public boolean flatAnnots() {
+        return RadaeePluginCallback.getInstance().flatAnnots();
+    }
+
+    public boolean saveDocumentToPath(String path, String pswd) {
+        return RadaeePluginCallback.getInstance().saveDocumentToPath(path, pswd);
+    }
+
+    public boolean saveDocumentToPath(String path) {
+        return RadaeePluginCallback.getInstance().saveDocumentToPath(path, "");
+    }
+
+    public void closeReader() {
+        RadaeePluginCallback.getInstance().closeReader();
     }
 
     @Override

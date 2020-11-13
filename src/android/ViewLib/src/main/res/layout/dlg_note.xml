@@ -3,7 +3,8 @@
     android:id="@+id/dlg_show_note"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical" >
+    android:orientation="vertical"
+    android:padding="10dp">
 
     <TextView
         android:id="@+id/lab_subj"
@@ -12,14 +13,13 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
         android:layout_marginTop="15dp"
-        android:text="Subject:" />
+        android:text="@string/note_subject" />
 
     <EditText
         android:id="@+id/txt_subj"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignBaseline="@+id/lab_subj"
-        android:layout_alignBottom="@+id/lab_subj"
         android:layout_alignParentRight="true"
         android:layout_toRightOf="@+id/lab_subj"
         android:ems="10" />
@@ -28,9 +28,10 @@
         android:id="@+id/lab_content"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
         android:layout_below="@+id/txt_subj"
-        android:text="Content:" />
+        android:layout_alignParentLeft="true"
+        android:layout_alignBaseline="@id/txt_content"
+        android:text="@string/note_text" />
 
     <EditText
         android:id="@+id/txt_content"
@@ -39,6 +40,7 @@
         android:layout_alignParentRight="true"
         android:layout_below="@+id/txt_subj"
         android:layout_toRightOf="@+id/lab_content"
+        android:layout_marginTop="10dp"
         android:ems="10"
         android:inputType="textMultiLine" >
 

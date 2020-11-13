@@ -19,20 +19,22 @@
 	modified on 05/10/17 -->  added double tap/long press js callbacks
 	
 	modified on 09/03/18 -->  added addAnnotAttachment, renderAnnotToFile
+
+	modified on 14/05/19 -->  added support to a parameter to switch between GPU and CPU based layouts.
 */
 package com.radaee.cordova;
 
 import android.content.Context;
+import android.telecom.Call;
 import android.text.TextUtils;
+import android.util.Log;
 import android.webkit.URLUtil;
-
-import com.google.common.base.Strings;
 
 import com.radaee.pdf.Global;
 import com.radaee.pdf.Page;
 import com.radaee.reader.PDFViewAct;
-import com.servicetitan.mobile.R; 
 import com.radaee.reader.PDFViewController;
+import com.radaee.reader.R;
 import com.radaee.util.BookmarkHandler;
 import com.radaee.util.RadaeePDFManager;
 import com.radaee.util.RadaeePluginCallback;
@@ -47,6 +49,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.math.BigDecimal;
+import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.HashMap;
 
 /**
  * define the method exposed by the RadaeePDFPlugin
@@ -63,12 +69,79 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
     private static CallbackContext sDidSearchTerm;
     private static CallbackContext sDidTapOnPage;
     private static CallbackContext sDidTapOnAnnot;
-	private static CallbackContext sDidDoubleTap;
+    private static CallbackContext sDidDoubleTap;
     private static CallbackContext sDidLongPress;
     private static final String TAG = "RadaeePDFPlugin";
-    private CallbackContext callbackContext;
 
-	/**
+    private static final HashMap<String,String> sBooleanGlobalFieldsDictionary = new HashMap<String, String>() {
+        {
+            put("g_annot_lock","g_annot_lock");
+            put("g_annot_readonly","g_annot_readonly");
+            put("g_auto_launch_link","g_auto_launch_link");
+            put("g_case_sensitive","g_case_sensitive");
+            put("g_dark_mode","dark_mode");
+            put("g_enable_graphical_signature","sEnableGraphicalSignature");
+            put("g_execute_annot_JS","sExecuteAnnotJS");
+            put("g_fit_signature_to_field","sFitSignatureToField");
+            put("g_highlight_annotation","highlight_annotation");
+            put("g_match_whole_word","g_match_whole_word");
+            put("g_save_doc","g_save_doc");
+            put("g_sel_right","selRTOL");
+            put("g_static_scale","fit_different_page_size");
+        }
+    };
+
+    private static final HashMap<String,String> sFloatGlobalFieldsDictionary = new HashMap<String, String>() {
+        {
+            put("g_ink_width","inkWidth");
+            put("g_line_width","line_annot_width");
+            put("g_oval_width","ellipse_annot_width");
+            put("g_rect_width","rect_annot_width");
+            put("g_zoom_level","zoomLevel");
+            put("g_zoom_step","zoomStep");
+        }
+    };
+
+    private static final HashMap<String,String> sHexadecimalGlobalFieldsDictionary = new HashMap<String, String>() {
+        {
+            put("g_annot_highlight_clr","highlight_color");
+            put("g_annot_squiggly_clr","squiggle_color");
+            put("g_annot_strikeout_clr","strikeout_color");
+            put("g_annot_transparency","annotTransparencyColor");
+            put("g_annot_underline_clr","underline_color");
+            put("g_ellipse_annot_fill_color","ellipse_annot_fill_color");
+            put("g_find_primary_color","findPrimaryColor");
+            put("g_ink_color","inkColor");
+            put("g_line_annot_fill_color","line_annot_fill_color");
+            put("g_line_color","line_annot_color");
+            put("g_oval_color","ellipse_annot_color");
+            put("g_readerview_bg_color","readerViewBgColor");
+            put("g_rect_annot_fill_color","rect_annot_fill_color");
+            put("g_rect_color","rect_annot_color");
+            put("g_sel_color","selColor");
+            put("g_thumbview_bg_color","thumbViewBgColor");
+        }
+    };
+
+    private static final HashMap<String,String> sIntGlobalFieldsDictionary = new HashMap<String, String>() {
+        {
+            put("g_line_annot_style1","line_annot_style1");
+            put("g_line_annot_style2","line_annot_style2");
+            put("g_navigation_mode","navigationMode");
+            put("g_render_mode","def_view");
+            put("g_render_quality","render_mode");
+            put("g_thumbview_height","thumbViewHeight");
+        }
+    };
+
+    private static final HashMap<String,String> sStringGlobalFieldsDictionary = new HashMap<String, String>() {
+        {
+            put("g_author","sAnnotAuthor");
+            put("g_sign_pad_descr","sSignPadDescr");
+        }
+    };
+
+    /**
      * Constructor.
      */
     public RadaeePDFPlugin() {
@@ -84,8 +157,10 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
         mPdfManager = new RadaeePDFManager(this);
+        mPdfManager.setDebugMode(false);
+        mPdfManager.setLayoutType(RadaeePDFManager.GPU_BASED_LAYOUT);
     }
-    
+
     /**
      * Executes the request and returns PluginResult.
      *
@@ -99,6 +174,11 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
         BookmarkHandler.setDbPath(mContext.getFilesDir() + File.separator + "Bookmarks.db");
 
         JSONObject params;
+
+        String globalFieldName;
+        String exposedFieldName;
+        Class<Global> globalClass = Global.class;
+
         switch (action) {
             case "activateLicense":  //activate the license
                 params = args.getJSONObject(0);
@@ -142,13 +222,10 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
                 showPdfInProgress = true;
                 if (!TextUtils.isEmpty(targetPath)) {
                     mPdfManager.show(mContext, targetPath, params.optString("password"), params.optBoolean("readOnlyMode"),
-                            params.optBoolean("automaticSave"), params.optInt("gotoPage"), params.optString("bmpFormat"), params.optString("author"), params.optString("originalValues"));
+                            params.optBoolean("automaticSave"), params.optInt("gotoPage"), params.optString("bmpFormat"),
+                            params.optString("author"), params.optInt("engine"));
                     showPdfInProgress = false;
-                    
-                    this.callbackContext = callbackContext;
-                    PluginResult result = new PluginResult(PluginResult.Status.OK, "opened");
-                    result.setKeepCallback(true);
-                    this.callbackContext.sendPluginResult(result);
+                    callbackContext.success("Pdf local opening success");
                 } else {
                     showPdfInProgress = false;
                     callbackContext.error("url is null or white space, this is a mandatory parameter");
@@ -158,29 +235,17 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
                 callbackContext.success("Current page Number = " + mPdfManager.getPageNumber());
                 break;
             case "JSONFormFields":  //get file's form fields values in json format
-                params = args.getJSONObject(0);
-                String fields = mPdfManager.getJsonFormFieldsFromFile(params.optString("url"));
-                if (Strings.isNullOrEmpty(fields)) {
-                    callbackContext.error("JSON property get failed");
-                } else {
-                    callbackContext.success(fields);
-                }
+                callbackContext.success("JSONFormFields = " + mPdfManager.getJsonFormFields());
                 break;
             case "JSONFormFieldsAtPage":  //get file's form fields values for given page in json format
                 callbackContext.success("JSONFormFields = " +
                         mPdfManager.getJsonFormFieldsAtPage(args.getJSONObject(0).optInt("page")));
                 break;
-
             case "setFormFieldWithJSON":  //Set form fields' values
                 params = args.getJSONObject(0);
-                String res = mPdfManager.setFormFieldsWithJSON(params.optString("url"), params.getJSONObject("codes"));
-                if (Strings.isNullOrEmpty(res)) {
-                    callbackContext.error("JSON property set failed");
-                } else {
-                    callbackContext.success("JSON property set successfully");
-                }
+                callbackContext.success("Result = " + mPdfManager.setFormFieldsWithJSON(params.optString("json")));
                 break;
-           case "setReaderBGColor":  //sets reader view background color
+            case "setReaderBGColor":  //sets reader view background color
                 params = args.getJSONObject(0);
                 mPdfManager.setReaderBGColor(params.optInt("color"));
                 callbackContext.success("Color passed to the reader");
@@ -195,7 +260,7 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
                 mPdfManager.setThumbHeight(params.optInt("height"));
                 callbackContext.success("Height passed to the reader");
                 break;
-			case "setDebugMode":  //Sets the debug mode in Global
+            case "setDebugMode":  //Sets the debug mode in Global
                 params = args.getJSONObject(0);
                 mPdfManager.setDebugMode(params.optBoolean("mode"));
                 callbackContext.success("property set successfully");
@@ -236,7 +301,7 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
             case "getBookmarks":
                 handleBookmarkActions(action, args.getJSONObject(0), callbackContext);
                 break;
-			case "addAnnotAttachment":
+            case "addAnnotAttachment":
                 boolean result = mPdfManager.addAnnotAttachment(args.getJSONObject(0).optString("path"));
                 if(result) callbackContext.success("Attachment added successfully");
                 else callbackContext.error("Attachment error");
@@ -245,6 +310,26 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
                 params = args.getJSONObject(0);
                 callbackContext.success("Result = " + mPdfManager.renderAnnotToFile(params.optInt("page"), params.optInt("annotIndex"),
                         params.optString("renderPath"), params.optInt("width"), params.optInt("height")));
+                break;
+            case "flatAnnotAtPage":
+                params = args.getJSONObject(0);
+                boolean flatResult = mPdfManager.flatAnnotAtPage(params.optInt("page"));
+                if(flatResult) callbackContext.success("Page flattering success");
+                else callbackContext.error("Page flattering error");
+                break;
+            case "flatAnnots":
+                boolean flatsResult = mPdfManager.flatAnnots();
+                if(flatsResult) callbackContext.success("Document flattering success");
+                else callbackContext.error("Document flattering error");
+                break;
+            case "saveDocumentToPath":
+                params = args.getJSONObject(0);
+                boolean saveAsResult = mPdfManager.saveDocumentToPath(params.optString("path"));
+                if(saveAsResult) callbackContext.success("Document save success");
+                else callbackContext.error("Document save error");
+                break;
+            case "closeReader":
+                mPdfManager.closeReader();
                 break;
             case "willShowReaderCallback":
                 sWillShowReader = callbackContext;
@@ -270,12 +355,149 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
             case "didTapOnAnnotationOfTypeCallback":
                 sDidTapOnAnnot = callbackContext;
                 break;
-			case "didDoubleTapOnPageCallback":
+            case "didDoubleTapOnPageCallback":
                 sDidDoubleTap = callbackContext;
                 break;
             case "didLongPressOnPageCallback":
                 sDidLongPress = callbackContext;
                 break;
+            case "getGlobal":
+                params = args.getJSONObject(0);
+                exposedFieldName = params.getString("name");
+                try {
+                    if (sBooleanGlobalFieldsDictionary.containsKey(exposedFieldName)) {
+                        globalFieldName = sBooleanGlobalFieldsDictionary.get(exposedFieldName);
+                        assert globalFieldName != null;
+                        Boolean obj = (Boolean) globalClass.getField(globalFieldName).get(new Object());
+                        callbackContext.success("Requested global value for " + exposedFieldName + " is: " + obj.toString());
+                    }
+                    else if (sFloatGlobalFieldsDictionary.containsKey(exposedFieldName)) {
+                        globalFieldName = sFloatGlobalFieldsDictionary.get(exposedFieldName);
+                        assert globalFieldName != null;
+                        Float obj = (Float) globalClass.getField(globalFieldName).get(new Object());
+                        callbackContext.success("Requested global value for " + exposedFieldName + " is: " + obj.toString());
+                    }
+                    else if (sIntGlobalFieldsDictionary.containsKey(exposedFieldName)) {
+                        globalFieldName = sIntGlobalFieldsDictionary.get(exposedFieldName);
+                        assert globalFieldName != null;
+                        Integer obj = (Integer) globalClass.getField(globalFieldName).get(new Object());
+                        callbackContext.success("Requested global value for " + exposedFieldName + " is: " + obj.toString());
+                    }
+                    else if (sHexadecimalGlobalFieldsDictionary.containsKey(exposedFieldName)) {
+                        globalFieldName = sHexadecimalGlobalFieldsDictionary.get(exposedFieldName);
+                        assert globalFieldName != null;
+                        Integer obj = (Integer) globalClass.getField(globalFieldName).get(new Object());
+                        callbackContext.success("Requested global value for " + exposedFieldName + " is: " + Integer.toHexString(obj));
+                    }
+                    else if (sStringGlobalFieldsDictionary.containsKey(exposedFieldName)) {
+                        globalFieldName = sStringGlobalFieldsDictionary.get(exposedFieldName);
+                        assert globalFieldName != null;
+                        String obj = (String) globalClass.getField(globalFieldName).get(new Object());
+                        callbackContext.success("Requested global value for " + exposedFieldName + " is: " + obj);
+                    }
+                    else callbackContext.error("Global value does not exist");
+                } catch (NoSuchFieldException | IllegalAccessException e) {
+                    callbackContext.error("Value not accessible");
+                }
+                break;
+
+            case "setGlobal":
+                params = args.getJSONObject(0);
+                exposedFieldName = params.getString("name");
+
+                try {
+                    if (sBooleanGlobalFieldsDictionary.containsKey(exposedFieldName)) {
+                        Boolean booleanValue = params.getBoolean("value");
+                        globalFieldName = sBooleanGlobalFieldsDictionary.get(exposedFieldName);
+                        assert globalFieldName != null;
+                        globalClass.getField(globalFieldName).set(null, booleanValue);
+                        Boolean obj = (Boolean) globalClass.getField(globalFieldName).get(null);
+                        callbackContext.success("Requested global value for " + exposedFieldName + " has been set to: " + obj.toString());
+                    }
+                    else if (sFloatGlobalFieldsDictionary.containsKey(exposedFieldName)) {
+                        Float floatValue = BigDecimal.valueOf(params.getDouble("value")).floatValue();
+                        globalFieldName = sFloatGlobalFieldsDictionary.get(exposedFieldName);
+                        assert globalFieldName != null;
+                        globalClass.getField(globalFieldName).set(null, floatValue);
+                        Float obj = (Float) globalClass.getField(globalFieldName).get(new Object());
+                        callbackContext.success("Requested global value for " + exposedFieldName + " has been set to: " + obj.toString());
+                    }
+                    else if (sIntGlobalFieldsDictionary.containsKey(exposedFieldName)) {
+                        Integer intValue = params.getInt("value");
+                        globalFieldName = sIntGlobalFieldsDictionary.get(exposedFieldName);
+                        assert globalFieldName != null;
+                        globalClass.getField(globalFieldName).set(null,intValue);
+                        Integer obj = (Integer) globalClass.getField(globalFieldName).get(new Object());
+                        callbackContext.success("Requested global value for " + exposedFieldName + " has been set to: " + obj.toString());
+                    }
+                    else if (sHexadecimalGlobalFieldsDictionary.containsKey(exposedFieldName)) {
+                        int intValue = params.getInt("value");
+                        globalFieldName = sHexadecimalGlobalFieldsDictionary.get(exposedFieldName);
+                        assert globalFieldName != null;
+                        globalClass.getField(globalFieldName).set(null,intValue);
+                        Integer obj = (Integer) globalClass.getField(globalFieldName).get(new Object());
+                        callbackContext.success("Requested global value for " + exposedFieldName + " has been set to: " + Integer.toHexString(obj));
+                    }
+                    else if (sStringGlobalFieldsDictionary.containsKey(exposedFieldName)) {
+                        String stringValue = params.getString("value");
+                        globalFieldName = sStringGlobalFieldsDictionary.get(exposedFieldName);
+                        assert globalFieldName != null;
+                        globalClass.getField(globalFieldName).set(null,stringValue);
+                        String obj = (String) globalClass.getField(globalFieldName).get(new Object());
+                        callbackContext.success("Requested global value for " + exposedFieldName + " has been set to: " + obj);
+                    }
+                    else callbackContext.error("Global value does not exist");
+                } catch (NoSuchFieldException | IllegalAccessException e) {
+                    callbackContext.error("Value not accessible");
+                }
+                break;
+
+            case "setBarButtonVisibility":
+                params = args.getJSONObject(0);
+                String btnCode = params.getString("code");
+                boolean visibility = params.getBoolean("visibility");
+                switch (btnCode) {
+                    case "btn_view":
+                        RadaeePDFManager.sHideViewModeButton = !visibility;
+                        break;
+                    case "btn_search":
+                        RadaeePDFManager.sHideSearchButton = !visibility;
+                        break;
+                    case "btn_more":
+                        RadaeePDFManager.sHideMoreButton = !visibility;
+                        break;
+                    case "btn_sel":
+                        RadaeePDFManager.sHideSelectButton = !visibility;
+                        break;
+                    case "btn_undo":
+                        RadaeePDFManager.sHideUndoButton = !visibility;
+                        break;
+                    case "btn_draw":
+                        RadaeePDFManager.sHideAnnotButton = !visibility;
+                        break;
+                    case "btn_redo":
+                        RadaeePDFManager.sHideRedoButton = !visibility;
+                        break;
+                    case "btn_outline":
+                        RadaeePDFManager.sHideOutlineButton = !visibility;
+                        break;
+                    case "btn_save":
+                        RadaeePDFManager.sHideSaveButton = !visibility;
+                        break;
+                    case "btn_share":
+                        RadaeePDFManager.sHideShareButton = !visibility;
+                        break;
+                    case "btn_print":
+                        RadaeePDFManager.sHidePrintButton = !visibility;
+                        break;
+                    case "btn_add_bookmark":
+                        RadaeePDFManager.sHideAddBookmarkButton = !visibility;
+                        break;
+                    case "btn_show_bookmarks":
+                        RadaeePDFManager.sHideShowBookmarksButton = !visibility;
+                        break;
+                    default:
+                }
             default:
                 return false;
         }
@@ -285,87 +507,66 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
 
     @Override
     public void willShowReader() {
-        if (sWillShowReader == null) {
-            return;
+        if(sWillShowReader != null) {
+            PluginResult result = new PluginResult(PluginResult.Status.OK);
+            result.setKeepCallback(true);
+            sWillShowReader.sendPluginResult(result);
         }
-        
-        PluginResult result = new PluginResult(PluginResult.Status.OK);
-        result.setKeepCallback(true);
-        sWillShowReader.sendPluginResult(result);
     }
 
     @Override
     public void didShowReader() {
-        if (sDidShowReader == null) {
-            return;
+        if(sDidShowReader != null) {
+            PluginResult result = new PluginResult(PluginResult.Status.OK);
+            result.setKeepCallback(true);
+            sDidShowReader.sendPluginResult(result);
         }
-        
-        PluginResult result = new PluginResult(PluginResult.Status.OK);
-        result.setKeepCallback(true);
-        sDidShowReader.sendPluginResult(result);
         //Log.d(TAG, mPdfManager.encryptDocAs("/mnt/sdcard/Download/pdf/License_enc.pdf", "12345", "", 4, 4, "123456789abcdefghijklmnopqrstuvw"));
     }
 
     @Override
     public void willCloseReader() {
-        if (sWillCloseReader == null) {
-            return;
+        if(sWillCloseReader != null) {
+            PluginResult result = new PluginResult(PluginResult.Status.OK);
+            result.setKeepCallback(true);
+            sWillCloseReader.sendPluginResult(result);
         }
-        
-        PluginResult result = new PluginResult(PluginResult.Status.OK);
-        result.setKeepCallback(true);
-        sWillCloseReader.sendPluginResult(result);
     }
 
     @Override
     public void didCloseReader() {
-        if (this.callbackContext == null) {
-            return;
+        if(sDidCloseReader != null) {
+            PluginResult result = new PluginResult(PluginResult.Status.OK);
+            result.setKeepCallback(true);
+            sDidCloseReader.sendPluginResult(result);
         }
-        
-        this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, "closed"));
-        this.callbackContext = null;
-        
-        if (sDidCloseReader == null) {
-            return;
-        }
-        
-        PluginResult result = new PluginResult(PluginResult.Status.OK);
-        result.setKeepCallback(true);
-        sDidCloseReader.sendPluginResult(result);
     }
-    
+
     @Override
     public void didChangePage(int pageno) {
-        if (sDidChangePage == null) {
-            return;
+        if(sDidChangePage != null) {
+            PluginResult result = new PluginResult(PluginResult.Status.OK, pageno);
+            result.setKeepCallback(true);
+            sDidChangePage.sendPluginResult(result);
         }
-        
-        PluginResult result = new PluginResult(PluginResult.Status.OK, pageno);
-        result.setKeepCallback(true);
-        sDidChangePage.sendPluginResult(result);
     }
 
     @Override
     public void didSearchTerm(String query, boolean found) {
-        if (sDidSearchTerm == null) {
-            return;
+        if(sDidSearchTerm != null) {
+            PluginResult result = new PluginResult(PluginResult.Status.OK, query);
+            result.setKeepCallback(true);
+            sDidSearchTerm.sendPluginResult(result);
         }
-        
-        PluginResult result = new PluginResult(PluginResult.Status.OK, query);
-        result.setKeepCallback(true);
-        sDidSearchTerm.sendPluginResult(result);
     }
 
     @Override
     public void onBlankTapped(int pageno) {
-        if (sDidTapOnPage == null) {
-            return;
+        if(sDidTapOnPage != null) {
+            PluginResult result = new PluginResult(PluginResult.Status.OK, pageno);
+            result.setKeepCallback(true);
+            sDidTapOnPage.sendPluginResult(result);
         }
-        
-        PluginResult result = new PluginResult(PluginResult.Status.OK, pageno);
-        result.setKeepCallback(true);
-        sDidTapOnPage.sendPluginResult(result);
     }
 
     @Override
@@ -382,37 +583,29 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
-        PluginResult result = new PluginResult(PluginResult.Status.OK, annot.GetType());
-        result.setKeepCallback(true);
-        sDidTapOnAnnot.sendPluginResult(result);
     }
 
     @Override
     public void onDoubleTapped(int pageno, float x, float y) {
-        if (sDidDoubleTap == null) {
-            return;
+        if(sDidDoubleTap != null) {
+            PluginResult result = new PluginResult(PluginResult.Status.OK, pageno);
+            result.setKeepCallback(true);
+            sDidDoubleTap.sendPluginResult(result);
         }
-        
-        PluginResult result = new PluginResult(PluginResult.Status.OK, pageno);
-        result.setKeepCallback(true);
-        sDidDoubleTap.sendPluginResult(result);
     }
 
     @Override
     public void onLongPressed(int pageno, float x, float y) {
-        if (sDidLongPress == null) {
-            return;
+        if(sDidLongPress != null) {
+            PluginResult result = new PluginResult(PluginResult.Status.OK, pageno);
+            result.setKeepCallback(true);
+            sDidLongPress.sendPluginResult(result);
         }
-        
-        PluginResult result = new PluginResult(PluginResult.Status.OK, pageno);
-        result.setKeepCallback(true);
-        sDidLongPress.sendPluginResult(result);
     }
 
     private void handleBookmarkActions(String action, JSONObject params, CallbackContext callbackContext) {
         Context mContext = this.cordova.getActivity().getApplicationContext();
-        if (!Global.isLicenseActivated())
+        if(!Global.isLicenseActivated())
             Global.Init(mContext);
 
         String filePath = params.optString("pdfPath");
@@ -420,8 +613,8 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
             callbackContext.error("pdfPath is null or white space, this is a mandatory parameter");
             return;
         }
-        
-        if (URLUtil.isFileUrl(filePath)) {
+
+        if(URLUtil.isFileUrl(filePath)) {
             String prefix = "file://";
             filePath = filePath.substring(filePath.indexOf(prefix) + prefix.length());
         }
@@ -462,9 +655,13 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
         Context mContext = this.cordova.getActivity().getApplicationContext();
 
         String bookmarks = mPdfManager.getBookmarksAsJson(filePath);
-        if (TextUtils.isEmpty(bookmarks))
+        if(TextUtils.isEmpty(bookmarks))
             callbackContext.error(mContext.getString(R.string.no_bookmarks));
         else
             callbackContext.success("Bookmarks json: " + bookmarks);
     }
+
+
+
+
 }

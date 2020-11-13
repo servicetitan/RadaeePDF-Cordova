@@ -82,6 +82,11 @@ public class PDFThumbView extends View implements PDFViewListener {
         return m_thumb != null && m_thumb.vTouchEvent(event);
     }
 
+    private Document m_doc;
+    private int m_gap;
+    private int m_bgColor;
+    private int m_orientation;
+    PDFThumbListener m_listener;
     public void thumbOpen(Document doc, PDFThumbListener listener, boolean isRTL) {
         if (Global.thumbViewHeight > 0) { //added to support configurable height
             ViewGroup.LayoutParams params = getLayoutParams();
@@ -89,16 +94,51 @@ public class PDFThumbView extends View implements PDFViewListener {
             setLayoutParams(params);
         }
         if (isRTL)
+        {
+            m_orientation = 2;
             m_thumb.vSetOrientation(2);//RTOL horizontal layout
+        }
         m_thumb.vOpen(doc, 8, Global.thumbViewBgColor, this);
+        m_listener = listener;
         m_thumb.vSetThumbListener(listener);
         m_thumb.vResize(getWidth(), getHeight());
+        m_doc = doc;
+        m_gap = 8;
+        m_bgColor = Global.thumbViewBgColor;
     }
 
-    public void thumbClose() {
+	public void thumbOpen( Document doc, PDFThumbListener listener, int thumbHeight, int orientation, int bgColor, int gap) {
+        m_orientation = orientation;
+        m_doc = doc;
+        m_gap = gap;
+        m_bgColor = bgColor;
+		m_thumb.vSetOrientation(orientation);
+		m_thumb.setThumbHeight(thumbHeight);
+		m_thumb.vOpen(doc, gap, bgColor, this);
+        m_listener = listener;
+		m_thumb.vSetThumbListener(listener);
+		m_thumb.vResize(getWidth(), getHeight());
+	}
+
+	public void thumbClose()
+	{
         if (m_thumb != null) {
             m_thumb.vClose();
         }
+    }
+    public void thumbSave()
+    {
+        if (m_thumb != null) {
+            m_thumb.vClose();
+        }
+    }
+    public void thumbRestore()
+    {
+        m_thumb.vSetOrientation(m_orientation);
+        m_thumb.vOpen(m_doc, m_gap, m_bgColor, this);
+        m_thumb.vSetThumbListener(m_listener);
+        m_thumb.vResize(getWidth(), getHeight());
+        invalidate();
     }
 
     /**
@@ -126,13 +166,15 @@ public class PDFThumbView extends View implements PDFViewListener {
     private Paint m_paint = new Paint();
 
     public void OnPDFPageDisplayed(Canvas canvas, PDFVPage vpage) {
-        m_paint.setColor(0x800000FF);
+        m_paint.setColor(Global.g_thumbview_label_color);
         int top = vpage.GetVY(m_thumb.vGetY());
         int bottom = top + vpage.GetHeight();
         int left = vpage.GetVX(m_thumb.vGetX());
         int right = left + vpage.GetWidth();
         if (m_thumb.vGetOrientation() == 1)//vertical
             m_paint.setTextSize(m_thumb.vGetWinW() / 5);
+		else if(m_thumb.vGetOrientation() == 3) //grid
+			m_paint.setTextSize(m_thumb.getThumbHeight() / 5);
         else
             m_paint.setTextSize(m_thumb.vGetWinH() / 5);
         m_paint.setTextAlign(Align.CENTER);

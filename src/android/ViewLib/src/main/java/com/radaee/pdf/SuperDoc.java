@@ -8,6 +8,14 @@ import android.graphics.Bitmap;
  */
 public class SuperDoc extends Document
 {
+	private static native long create(String paths[], String passwords[]);
+	private static native void destroy(long hand);
+	private static native long getPage(long hand, int pageno);
+	private static native int getPageCount(long hand);
+	private static native float getPageWidth(long hand, int pageno);
+	private static native float getPageHeight(long hand, int pageno);
+	private static native float[] getPagesMaxSize(long hand);
+
 	private class DocInfo
 	{
 		String path;
@@ -17,6 +25,7 @@ public class SuperDoc extends Document
 		int page_count;
 	}
 	private DocInfo m_docs[] = null;
+
 	/**
 	 * Initialize SuperDoc object
 	 * @param paths all full path list, it is better: length of list does not exceed 2048
@@ -24,6 +33,17 @@ public class SuperDoc extends Document
 	 * 	this can be null, if all documents has no password.
 	 */
 	public SuperDoc(String paths[], String passwords[])
+	{
+		hand_val = create(paths, passwords);
+	}
+
+	/**
+	 * Initialize SuperDoc object
+	 * @param paths all full path list, it is better: length of list does not exceed 2048
+	 * @param passwords password list, passwords[index] is used for paths[index].<br>
+	 * 	this can be null, if all documents has no password.
+	 */
+	public void SuperDocInfo(String paths[], String passwords[])
 	{
 		if(paths != null)
 		{
@@ -50,6 +70,31 @@ public class SuperDoc extends Document
 			}
 		}
 	}
+
+	public SuperDoc(Document[] documents)
+	{
+		if(documents != null)
+		{
+			int cnt = documents.length;
+			m_docs = new DocInfo[cnt];
+			int cur = 0;
+			int page_cnt = 0;
+			while( cur < cnt )
+			{
+				DocInfo di = new DocInfo();
+				if(documents[cur] != null) {
+					di.doc = documents[cur];
+					di.page_start = page_cnt;
+
+					di.page_count = di.doc.GetPageCount();//if open failed, return 0.
+					m_docs[cur] = di;
+					page_cnt += di.page_count;
+				}
+				cur++;
+			}
+		}
+	}
+
 	private final int lookup_doc(int pageno)
 	{
 		int left = 0;
@@ -71,13 +116,14 @@ public class SuperDoc extends Document
 		}
 		return -1;
 	}
+
 	/**
 	 * check if opened.
 	 * @return true or false.
 	 */
 	public boolean IsOpened()
 	{
-		return (m_docs != null);
+		return (hand_val != 0) || (m_docs != null);
 	}
 	/**
 	 * create a empty PDF document
@@ -110,7 +156,7 @@ public class SuperDoc extends Document
 	public void SetFontDel( PDFFontDelegate del )
 	{
 	}
-	
+
 	/**
 	 * open document.<br/>
 	 * first time, SDK try password as user password, and then try password as owner password.
@@ -204,15 +250,20 @@ public class SuperDoc extends Document
 	 */
 	public void Close()
 	{
-        if(m_docs != null) {
-            int cur = 0;
-            int cnt = m_docs.length;
-            while (cur < cnt) {
-                m_docs[cur].doc.Close();
-                cur++;
-            }
-            m_docs = null;
-        }
+		if(m_docs != null) {
+			int cur = 0;
+			int cnt = m_docs.length;
+			while (cur < cnt) {
+				m_docs[cur].doc.Close();
+				cur++;
+			}
+			m_docs = null;
+		}
+
+		if(hand_val != 0) {
+			destroy(hand_val);
+			hand_val = 0;
+		}
 	}
 	/**
 	 * get a Page object for page NO.
@@ -221,6 +272,16 @@ public class SuperDoc extends Document
 	 */
 	public Page GetPage( int pageno )
 	{
+		if(hand_val != 0) {
+			long page_hand = getPage(hand_val, pageno);
+			if (page_hand == 0) return null;
+			Page page = new Page();
+			if (page != null) {
+				page.hand = page_hand;
+				page.m_doc = this;
+			}
+			return page;
+		}
 		if(m_docs == null) return null;
 		int index = lookup_doc(pageno);
 		if( index < 0 ) return null;
@@ -232,6 +293,8 @@ public class SuperDoc extends Document
 	 */
 	public int GetPageCount()
 	{
+		if(hand_val != 0)
+			return getPageCount(hand_val);
 		if(m_docs == null) return 0;
 		int index = m_docs.length - 1;
 		return m_docs[index].page_start + m_docs[index].page_count;
@@ -243,6 +306,8 @@ public class SuperDoc extends Document
 	 */
 	public float GetPageWidth( int pageno )
 	{
+		if(hand_val != 0)
+			return getPageWidth(hand_val, pageno);
 		if(m_docs == null) return 0;
 		int index = lookup_doc(pageno);
 		if( index < 0 ) return 0;
@@ -255,6 +320,8 @@ public class SuperDoc extends Document
 	 */
 	public float GetPageHeight( int pageno )
 	{
+		if(hand_val != 0)
+			return getPageHeight(hand_val, pageno);
 		if(m_docs == null) return 0;
 		int index = lookup_doc(pageno);
 		if( index < 0 ) return 0;
@@ -340,7 +407,7 @@ public class SuperDoc extends Document
 	 * others: see PDF reference
 	 * @param method reserved, currently only AES with V=4 and R=4 mode can be working.
 	 * @param id must be 32 bytes for file ID. it is divided to 2 array in native library, as each 16 bytes.
-	 * @return true or false. 
+	 * @return true or false.
 	 */
 	public boolean EncryptAs( String dst, String upswd, String opswd, int perm, int method, byte[] id)
 	{
@@ -356,7 +423,7 @@ public class SuperDoc extends Document
 	}
 	/**
 	 * new a root outline to document, it insert first root outline to Document.<br/>
-	 * the old first root outline, shall be next of this outline. 
+	 * the old first root outline, shall be next of this outline.
 	 * @param label label to display
 	 * @param pageno pageno to jump
 	 * @param top y position in PDF coordinate
@@ -369,9 +436,9 @@ public class SuperDoc extends Document
 	/**
 	 * Start import operations, import page from src<br/>
 	 * a premium license is needed for this method.<br/>
-	 * you shall maintenance the source Document object until all pages are imported and ImportContext.Destroy() invoked. 
+	 * you shall maintenance the source Document object until all pages are imported and ImportContext.Destroy() invoked.
 	 * @param src source Document object that opened.
-	 * @return a context object used in ImportPage. 
+	 * @return a context object used in ImportPage.
 	 */
 	public ImportContext ImportStart( Document src )
 	{
@@ -577,38 +644,41 @@ public class SuperDoc extends Document
 		return -1;
 	}
 
-    public float[] GetPagesMaxSize()
-    {
-        if(m_docs == null) return null;
-        float [] max = m_docs[0].doc.GetPagesMaxSize();
-        int cur = 1;
-        int cnt = m_docs.length;
-        while(cur < cnt)
-        {
-            float[] cs1 = m_docs[cur].doc.GetPagesMaxSize();
-            if(max[0] < cs1[0]) max[0] = cs1[0];
-            if(max[1] < cs1[1]) max[1] = cs1[1];
-            cur++;
-        }
-        return max;
-    }
-    public Page GetPage0()
-    {
-        if(m_docs == null) return null;
-        return m_docs[0].doc.GetPage0();
-    }
-    @Override
+	public float[] GetPagesMaxSize()
+	{
+		if(hand_val != 0)
+			return getPagesMaxSize(hand_val);
+		if(m_docs == null) return null;
+		float [] max = m_docs[0].doc.GetPagesMaxSize();
+		int cur = 1;
+		int cnt = m_docs.length;
+		while(cur < cnt)
+		{
+			float[] cs1 = m_docs[cur].doc.GetPagesMaxSize();
+			if(max[0] < cs1[0]) max[0] = cs1[0];
+			if(max[1] < cs1[1]) max[1] = cs1[1];
+			cur++;
+		}
+		return max;
+	}
+	public Page GetPage0()
+	{
+		return GetPage(0);
+	}
+	@Override
 	public long CreateVNPage(int pageno, int cw, int ch, Bitmap.Config format)
 	{
+		if(hand_val != 0)
+			return VNPage.createFromSuperDoc(hand_val, pageno, cw, ch, format);
 		if(m_docs == null) return 0;
 		int index = lookup_doc(pageno);
 		if( index < 0 ) return 0;
 		return m_docs[index].doc.CreateVNPage(pageno - m_docs[index].page_start, cw,ch, format);
 	}
-    @Override
-    protected void finalize() throws Throwable
-    {
-        Close();
-        super.finalize();
-    }
+	@Override
+	protected void finalize() throws Throwable
+	{
+		Close();
+		super.finalize();
+	}
 }

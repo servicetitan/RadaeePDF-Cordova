@@ -49,6 +49,11 @@ RadaeePDFPlugin.prototype.openFromAssets = function(params, successCallback, err
                 exec(successCallback, errorCallback, 'RadaeePDFPlugin', 'openFromAssets', [params]);
 };
 
+RadaeePDFPlugin.prototype.closeReader = function(params, successCallback, errorCallback) {
+       params = params || {};
+               exec(successCallback, errorCallback, 'RadaeePDFPlugin', 'closeReader', [params]);
+};
+
 RadaeePDFPlugin.prototype.getFileState = function (params, successCallback, errorCallback) {
         params = params || {};
 
@@ -95,6 +100,24 @@ RadaeePDFPlugin.prototype.setThumbHeight = function (params, successCallback, er
         params = params || {};
 
         exec(successCallback, errorCallback, 'RadaeePDFPlugin', 'setThumbHeight', [params]);
+};
+               
+RadaeePDFPlugin.prototype.getGlobal = function (params, successCallback, errorCallback) {
+       params = params || {};
+
+       exec(successCallback, errorCallback, 'RadaeePDFPlugin', 'getGlobal', [params]);
+};
+               
+RadaeePDFPlugin.prototype.setGlobal = function (params, successCallback, errorCallback) {
+      params = params || {};
+
+      exec(successCallback, errorCallback, 'RadaeePDFPlugin', 'setGlobal', [params]);
+};
+               
+RadaeePDFPlugin.prototype.setBarButtonVisibility = function (params, successCallback, errorCallback) {
+     params = params || {};
+
+     exec(successCallback, errorCallback, 'RadaeePDFPlugin', 'setBarButtonVisibility', [params]);
 };
 
 RadaeePDFPlugin.prototype.setDebugMode = function (params, successCallback, errorCallback) { //android only
@@ -182,6 +205,36 @@ RadaeePDFPlugin.prototype.renderAnnotToFile = function (params, successCallback,
         exec(successCallback, errorCallback, 'RadaeePDFPlugin', 'renderAnnotToFile', [params]);
 };
 
+RadaeePDFPlugin.prototype.flatAnnotAtPage = function (params, successCallback, errorCallback) {
+        params = params || {};
+
+        exec(successCallback, errorCallback, 'RadaeePDFPlugin', 'flatAnnotAtPage', [params]);
+};
+
+RadaeePDFPlugin.prototype.flatAnnots = function (params, successCallback, errorCallback) {
+        params = params || {};
+
+        exec(successCallback, errorCallback, 'RadaeePDFPlugin', 'flatAnnots', [params]);
+};
+
+RadaeePDFPlugin.prototype.saveDocumentToPath = function (params, successCallback, errorCallback) {
+        params = params || {};
+
+        exec(successCallback, errorCallback, 'RadaeePDFPlugin', 'saveDocumentToPath', [params]);
+};
+
+RadaeePDFPlugin.prototype.getGlobal = function (params, successCallback, errorCallback) {
+       params = params || {};
+
+       exec(successCallback, errorCallback, 'RadaeePDFPlugin', 'getGlobal', [params]);
+};
+
+RadaeePDFPlugin.prototype.setGlobal = function (params, successCallback, errorCallback) {
+       params = params || {};
+
+       exec(successCallback, errorCallback, 'RadaeePDFPlugin', 'setGlobal', [params]);
+};
+
 // Callbacks
                
 RadaeePDFPlugin.prototype.willShowReaderCallback = function (successCallback) {
@@ -235,3 +288,4 @@ RadaeePDFPlugin.prototype.didTapOnAnnotationOfTypeCallback = function (successCa
 };
 
 module.exports = new RadaeePDFPlugin();
+
