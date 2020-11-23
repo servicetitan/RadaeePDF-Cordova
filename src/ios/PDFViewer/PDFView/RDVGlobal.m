@@ -363,6 +363,7 @@
     _g_screen_awake = false;
     _g_auto_launch_link = true;
     _g_save_doc = false;
+    _g_suppressClose = false;
     _g_highlight_annotation = true;
     _g_enable_graphical_signature = true;
     

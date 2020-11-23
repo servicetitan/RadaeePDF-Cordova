@@ -814,7 +814,7 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
     void savePDF() {
         if (m_view.PDFSave()) {
             sFileState = MODIFIED_AND_SAVED;
-            Toast.makeText(m_parent.getContext(), R.string.saved_message, Toast.LENGTH_SHORT).show();
+            // Toast.makeText(m_parent.getContext(), R.string.saved_message, Toast.LENGTH_SHORT).show();
         }
     }
 

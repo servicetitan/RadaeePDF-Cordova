@@ -223,7 +223,7 @@ public class RadaeePDFPlugin extends CordovaPlugin implements RadaeePluginCallba
                 if (!TextUtils.isEmpty(targetPath)) {
                     mPdfManager.show(mContext, targetPath, params.optString("password"), params.optBoolean("readOnlyMode"),
                             params.optBoolean("automaticSave"), params.optInt("gotoPage"), params.optString("bmpFormat"),
-                            params.optString("author"), params.optInt("engine"));
+                            params.optString("author"), params.optInt("engine"), params.optBoolean("suppressClose"));
                     showPdfInProgress = false;
                     callbackContext.success("Pdf local opening success");
                 } else {

@@ -84,7 +84,7 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
      */
     public void show(Context context, String url, String password) {
         show(context, url, password, false, false, 0, null,
-                null, mLayoutType);
+                null, mLayoutType, false);
     }
 
     /**
@@ -99,9 +99,10 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
      * @param bmpFormat bmp format, can be RGB_565 or ARGB_4444, default is ALPHA_8
      * @param author if not empty, it will be used to set annotations' author during creation.
      * @param layoutType determine the type of the layout to be used for rendering, (GPU or CPU) based layout, GPU_BASED_LAYOUT:0 (OpenGL), CPU_BASED_LAYOUT:1
+     * @param suppressClose if true, the reader will not close unless explicitly asked by the plugin host (via the closeReader method). The willCloseReaderCallback callback will still fire to notify the host that the user wanted to close the reader. 
      */
     public void show(Context context, String url, String password, boolean readOnlyMode, boolean automaticSave,
-                     int gotoPage, String bmpFormat, String author, int layoutType) {
+                     int gotoPage, String bmpFormat, String author, int layoutType, boolean suppressClose) {
         mLayoutType = layoutType;
         if(!TextUtils.isEmpty(url)) {
             String name;
@@ -122,6 +123,7 @@ public class RadaeePDFManager implements RadaeePluginCallback.PDFReaderListener 
             intent.putExtra("AUTOMATIC_SAVE", automaticSave);
             intent.putExtra("GOTO_PAGE", gotoPage);
             intent.putExtra( "BMPFormat", bmpFormat);
+            intent.putExtra("suppressClose", suppressClose);
             context.startActivity(intent);
         } else
             Toast.makeText(context, context.getString(R.string.failed_invalid_path), Toast.LENGTH_SHORT).show();
