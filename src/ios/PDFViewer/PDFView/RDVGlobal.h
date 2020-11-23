@@ -70,6 +70,7 @@
 @property (nonatomic) bool g_sel_right;
 @property (nonatomic) bool g_screen_awake;
 @property (nonatomic) bool g_save_doc;
+@property (nonatomic) bool g_suppressClose;
 @property (nonatomic) bool g_static_scale;
 @property (nonatomic) bool g_paging_enabled;
 @property (nonatomic) bool g_double_page_enabled;
@@ -97,4 +98,3 @@
 - (void)setup;
 
 @end
-

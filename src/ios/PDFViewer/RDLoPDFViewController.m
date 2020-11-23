@@ -321,15 +321,16 @@
 }
 
 -(int)PDFOpen:(NSString *)path : (NSString *)pwd {
-    return [self PDFOpen:path :pwd atPage:0 readOnly:NO autoSave:NO author:@""];
+    return [self PDFOpen:path :pwd atPage:0 readOnly:NO autoSave:NO suppressClose:NO author:@""];
 }
 
--(int)PDFOpen:(NSString *)path : (NSString *)pwd atPage:(int)page readOnly:(BOOL)readOnlyEnabled autoSave:(BOOL)autoSave author:(NSString *)author
+-(int)PDFOpen:(NSString *)path : (NSString *)pwd atPage:(int)page readOnly:(BOOL)readOnlyEnabled autoSave:(BOOL)autoSave suppressClose:(BOOL)suppressClose author:(NSString *)author
 {
     GLOBAL.g_author = author;
     GLOBAL.g_pdf_path = [[path stringByDeletingLastPathComponent] mutableCopy];
     GLOBAL.g_pdf_name = [[path lastPathComponent] mutableCopy];
     GLOBAL.g_save_doc = autoSave;
+    GLOBAL.g_suppressClose = suppressClose;
     
     CGRect rect = [self screenRect];
     m_doc = [[PDFDoc alloc] init];
@@ -1162,7 +1163,18 @@
 
 - (void)closeView
 {
-    if ([m_view isModified] && !GLOBAL.g_save_doc) {
+    [self closeView:false];
+}
+
+- (void)closeView:(BOOL)isFromCordova
+{
+    if (!isFromCordova && GLOBAL.g_suppressClose) {
+
+        if (_delegate && [_delegate respondsToSelector:@selector(willCloseReader)] && m_doc != nil) {
+            [_delegate willCloseReader];
+        }
+    }
+    else if ([m_view isModified] && !GLOBAL.g_save_doc) {
         
         UIAlertController* alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Exiting", nil)
                                                                        message:NSLocalizedString(@"Document modified.\r\nDo you want to save it?", nil)
@@ -1596,16 +1608,16 @@
 {
     if([m_view forceSave])
     {
-        UIAlertController* alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Notice", nil)
-                                                                       message:NSLocalizedString(@"Document saved", nil)
-                                                                preferredStyle:UIAlertControllerStyleAlert];
+        // UIAlertController* alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Notice", nil)
+        //                                                                message:NSLocalizedString(@"Document saved", nil)
+        //                                                         preferredStyle:UIAlertControllerStyleAlert];
         
-        UIAlertAction* ok = [UIAlertAction
-                             actionWithTitle:NSLocalizedString(@"OK", nil)
-                             style:UIAlertActionStyleDefault
-                             handler:nil];
-        [alert addAction:ok];
-        [self presentViewController:alert animated:YES completion:nil];
+        // UIAlertAction* ok = [UIAlertAction
+        //                      actionWithTitle:NSLocalizedString(@"OK", nil)
+        //                      style:UIAlertActionStyleDefault
+        //                      handler:nil];
+        // [alert addAction:ok];
+        // [self presentViewController:alert animated:YES completion:nil];
     }
 }
 
@@ -2923,4 +2935,3 @@
 
 
 @end
-

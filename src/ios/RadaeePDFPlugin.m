@@ -70,7 +70,7 @@
                 filePath = [documentsDirectory stringByAppendingPathComponent:filePath];
             }
             
-            [self openPdf:filePath atPage:[[params objectForKey:@"gotoPage"] intValue] withPassword:[params objectForKey:@"password"] readOnly:[[params objectForKey:@"readOnlyMode"] boolValue] autoSave:[[params objectForKey:@"automaticSave"] boolValue]];
+            [self openPdf:filePath atPage:[[params objectForKey:@"gotoPage"] intValue] withPassword:[params objectForKey:@"password"] readOnly:[[params objectForKey:@"readOnlyMode"] boolValue] autoSave:[[params objectForKey:@"automaticSave"] boolValue] suppressClose:[[params objectForKey:@"suppressClose"] boolValue]];
         } else {
             [self openFromPath:command];
         }
@@ -89,7 +89,7 @@
     
     NSString *filePath = [[NSBundle mainBundle] pathForResource:url ofType:nil];
     
-    [self openPdf:filePath atPage:[[params objectForKey:@"gotoPage"] intValue] withPassword:[params objectForKey:@"password"] readOnly:[[params objectForKey:@"readOnlyMode"] boolValue] autoSave:[[params objectForKey:@"automaticSave"] boolValue]];
+    [self openPdf:filePath atPage:[[params objectForKey:@"gotoPage"] intValue] withPassword:[params objectForKey:@"password"] readOnly:[[params objectForKey:@"readOnlyMode"] boolValue] autoSave:[[params objectForKey:@"automaticSave"] boolValue] suppressClose:[[params objectForKey:@"suppressClose"] boolValue]];
 }
 
 - (void)openFromPath:(CDVInvokedUrlCommand *)command
@@ -101,10 +101,10 @@
     
     NSString *filePath = url;
     
-    [self openPdf:filePath atPage:[[params objectForKey:@"gotoPage"] intValue] withPassword:[params objectForKey:@"password"] readOnly:[[params objectForKey:@"readOnlyMode"] boolValue] autoSave:[[params objectForKey:@"automaticSave"] boolValue]];
+    [self openPdf:filePath atPage:[[params objectForKey:@"gotoPage"] intValue] withPassword:[params objectForKey:@"password"] readOnly:[[params objectForKey:@"readOnlyMode"] boolValue] autoSave:[[params objectForKey:@"automaticSave"] boolValue] suppressClose:[[params objectForKey:@"suppressClose"] boolValue]];
 }
 
-- (void)openPdf:(NSString *)filePath atPage:(int)page withPassword:(NSString *)password readOnly:(BOOL)readOnly autoSave:(BOOL)autoSave
+- (void)openPdf:(NSString *)filePath atPage:(int)page withPassword:(NSString *)password readOnly:(BOOL)readOnly autoSave:(BOOL)autoSave suppressClose:(BOOL)suppressClose
 {
     NSLog(@"File Path: %@", filePath);
     if (![[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
@@ -123,7 +123,7 @@
     if ([self isPageViewController]) {
         result = [m_pdfP PDFOpenAtPath:filePath withPwd:password];
     } else {
-        result = [m_pdf PDFOpen:filePath :password atPage:page readOnly:readOnly autoSave:autoSave author:@""];
+        result = [m_pdf PDFOpen:filePath :password atPage:page readOnly:readOnly autoSave:autoSave suppressClose:suppressClose author:@""];
     }
     
     NSLog(@"%d", result);
@@ -138,7 +138,7 @@
 - (void)closeReader:(CDVInvokedUrlCommand *)command
 {
     if (m_pdf != nil && ![self isPageViewController]) {
-        [m_pdf closeView];
+        [m_pdf closeView:true];
     }
     else if (m_pdfP != nil && [self isPageViewController])
     {
@@ -340,7 +340,7 @@
     
     NSArray *floatGlobals = [NSArray arrayWithObjects: @"g_ink_width", @"g_rect_width", @"g_line_width", @"g_oval_width", @"g_zoom_level", @"g_layout_zoom_level", @"g_zoom_step",  nil];
     
-    NSArray *boolGlobals = [NSArray arrayWithObjects: @"g_case_sensitive", @"g_match_whole_word", @"g_sel_right", @"g_save_doc", @"g_static_scale", @"g_paging_enabled", @"g_double_page_enabled", @"g_curl_enabled", @"g_cover_page_enabled", @"g_fit_signature_to_field", @"g_execute_annot_JS", @"g_dark_mode", @"g_annot_lock", @"g_annot_readonly", @"g_auto_launch_link", @"g_highlight_annotation", @"g_enable_graphical_signature", nil];
+    NSArray *boolGlobals = [NSArray arrayWithObjects: @"g_case_sensitive", @"g_match_whole_word", @"g_sel_right", @"g_save_doc", @"g_suppressClose", @"g_static_scale", @"g_paging_enabled", @"g_double_page_enabled", @"g_curl_enabled", @"g_cover_page_enabled", @"g_fit_signature_to_field", @"g_execute_annot_JS", @"g_dark_mode", @"g_annot_lock", @"g_annot_readonly", @"g_auto_launch_link", @"g_highlight_annotation", @"g_enable_graphical_signature", nil];
     
     NSArray *stringGlobals = [NSArray arrayWithObjects: @"g_pdf_name", @"g_pdf_path", @"g_author", @"g_sign_pad_descr", nil];
     
@@ -1044,6 +1044,7 @@
         } else
         {
             if (m_pdf) {
+                [m_pdf refreshCurrentPage];
                 [[NSNotificationCenter defaultCenter] postNotificationName:@"Radaee-Refresh-Page" object:nil];
             }
             [self setFormFieldsResult];
@@ -1257,4 +1258,3 @@
 }
 
 @end
-

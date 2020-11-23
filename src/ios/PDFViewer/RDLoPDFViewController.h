@@ -92,11 +92,12 @@
 @property (nonatomic, assign) id <RDPDFViewControllerDelegate> delegate;
 
 - (int)PDFOpen:(NSString *)path : (NSString *)pwd;
-- (int)PDFOpen:(NSString *)path : (NSString *)pwd atPage:(int)page readOnly:(BOOL)readOnlyEnabled autoSave:(BOOL)autoSave author:(NSString *)author;
+- (int)PDFOpen:(NSString *)path : (NSString *)pwd atPage:(int)page readOnly:(BOOL)readOnlyEnabled autoSave:(BOOL)autoSave suppressClose:(BOOL)suppressClose author:(NSString *)author;
 - (int)PDFOpenStream:(id<PDFStream>)stream :(NSString *)password;
 - (int)PDFOpenMem:(void *)data :(int)data_size :(NSString *)pwd;
 - (void)PDFGoto:(int)pageno;
 - (void)closeView;
+- (void)closeView:(BOOL)isFromCordova;
 
 #pragma mark - lib methods
 
@@ -134,4 +135,3 @@
 - (PDF_RECT)pdfRectFromScreenRect:(CGRect)screenRect;
 - (CGRect)screenRectFromPdfRect:(float)top :(float)left :(float)right :(float)bottom :(int)pageNum;
 @end
-
