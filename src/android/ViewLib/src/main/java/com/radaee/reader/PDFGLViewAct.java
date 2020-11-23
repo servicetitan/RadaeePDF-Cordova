@@ -302,26 +302,53 @@ public class PDFGLViewAct extends Activity implements ILayoutView.PDFLayoutListe
 	}
 
 	private void onClose(final boolean onBackPressed) {
+		boolean suppressClose = getIntent().getBooleanExtra("suppressClose", false);
 		if (getFileState() == PDFViewController.MODIFIED_NOT_SAVED) {
 			if (getIntent().getBooleanExtra("AUTOMATIC_SAVE", false) || Global.g_save_doc) {
 				if (m_controller != null) m_controller.savePDF();
-				if(onBackPressed) super.onBackPressed();
+				if(onBackPressed) {
+					if (suppressClose) {
+						RadaeePluginCallback.getInstance().willCloseReader();
+					} else {
+						super.onBackPressed();
+					}
+				}
 			} else {
 				new AlertDialog.Builder(this).setTitle(R.string.exiting)
 						.setMessage(R.string.save_msg).setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						if (m_controller != null) m_controller.savePDF();
-						if(onBackPressed) PDFGLViewAct.super.onBackPressed();
+						if(onBackPressed) {
+							if (suppressClose) {
+								RadaeePluginCallback.getInstance().willCloseReader();
+							} else {
+								PDFGLViewAct.super.onBackPressed();
+							}
+						}
 					}
 				}).setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
-						if(onBackPressed) PDFGLViewAct.super.onBackPressed();
+						if(onBackPressed) {
+							if (suppressClose) {
+								if (m_controller != null) m_controller.savePDF();
+								RadaeePluginCallback.getInstance().willCloseReader();
+							} else {
+								PDFGLViewAct.super.onBackPressed();
+							}
+						}
 					}
 				}).show();
 			}
-		} else if(onBackPressed) super.onBackPressed();
+		} else if(onBackPressed) {
+			if (suppressClose) {
+				if (m_controller != null) m_controller.savePDF();
+				RadaeePluginCallback.getInstance().willCloseReader();
+			} else {
+				super.onBackPressed();
+			}
+		}
 	}
 
 	/**
