@@ -2131,7 +2131,8 @@
 
 -(void)printPdf
 {
-    NSString *path = [GLOBAL.g_pdf_path stringByAppendingString:GLOBAL.g_pdf_name];
+    NSString *dir = [GLOBAL.g_pdf_path stringByAppendingString:@"/"];
+    NSString *path = [dir stringByAppendingString:GLOBAL.g_pdf_name];
     if (![[NSFileManager defaultManager] fileExistsAtPath:path]) {
         UIAlertController* alert = [UIAlertController alertControllerWithTitle:@"Warning"
                                        message:@"PDF file not available"
