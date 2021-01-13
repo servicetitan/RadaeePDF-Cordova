@@ -2358,12 +2358,15 @@
         [self vAnnotEnd];
         return;
     }
+    /*
+    // Signature fields suck - most of the time th pop up simply doesn't show.
     if ([self canSaveDocument] && m_annot.fieldType == 4 && m_annot.getSignStatus == 0){
         if (self.m_del && [self.m_del respondsToSelector:@selector(OnAnnotSignature:)] && GLOBAL.g_enable_graphical_signature) {
             [self.m_del OnAnnotSignature:m_annot];
         }
         return;
     }
+    */
     [self vAnnotEnd];
     return;
 }

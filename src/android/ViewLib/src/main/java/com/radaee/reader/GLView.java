@@ -313,8 +313,14 @@ public class GLView extends GLSurfaceView implements GLCanvas.CanvasListener {
                     }
                 } else if (PDFCanSave() && m_annot.GetListItemCount() >= 0)  //if list choice
                     onListAnnot();
+                /* 
+                // signature fields suck for the following reasons:
+                //     - the signature pop-up requires you to provide a PKCS12 certificate file and password
+                //       and signs the signature field with it - they become read-only after signing, without the ability to clear the field
+                //     - after signing, the field becomes read-only - you can't clear the signature
                 else if (PDFCanSave() && m_annot.GetFieldType() == 4 && Global.sEnableGraphicalSignature)  //signature field
                     handleSignatureField();
+                */
                 else if (m_annot.GetURI() != null && Global.g_auto_launch_link && m_listener != null) { // launch link automatically
                     m_listener.OnPDFOpenURI(m_annot.GetURI());
                     PDFEndAnnot();
