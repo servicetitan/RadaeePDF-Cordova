@@ -183,7 +183,9 @@ public class CommonUtil {
                         }
                         mAnnotInfoJson.put("ListItemCount", mAnnotation.GetListItemCount());
 
-                        mAnnotInfoJson.put("EditText", mAnnotation.GetEditText());
+                        String editText = mAnnotation.GetEditText();
+                        mAnnotInfoJson.put("EditText", editText == null ? "" : editText);
+
                         mAnnotInfoJson.put("EditType", mAnnotation.GetEditType());
                         mAnnotInfoJson.put("EditTextFormat", mAnnotation.GetFieldFormat());
 
