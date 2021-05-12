@@ -1205,7 +1205,11 @@ extern uint annotStrikeoutColor;
 }
 -(NSString *)getEditText
 {
-    return Page_getAnnotEditText( m_page, m_handle );
+    NSString* text = Page_getAnnotEditText( m_page, m_handle );
+    if (text == nil || (NSNull*)text == [NSNull null]) {
+        return @"";
+    }
+    return text;
 }
 
 -(NSString *)getFieldJS:(int)idx
@@ -1973,9 +1977,3 @@ extern uint annotStrikeoutColor;
 }
 
 @end
-
-
-
-
-
-
