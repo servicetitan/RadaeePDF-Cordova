@@ -1146,8 +1146,8 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
                     JSONArray pagesArray = pages.optJSONArray("Pages");
                     for (int i = 0; i < pagesArray.length(); i++) {
                         CommonUtil.parsePageJsonFormFields(pagesArray.getJSONObject(i), m_view.PDFGetDoc());
+                        m_view.PDFUpdatePage(i);
                     }
-                    m_view.PDFUpdatePage(i);
                     return "property set successfully";
                 } else return "\"Pages\" attribute is missing";
             } catch (Exception e) {
