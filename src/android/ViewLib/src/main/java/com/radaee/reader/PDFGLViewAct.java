@@ -113,6 +113,12 @@ public class PDFGLViewAct extends Activity implements ILayoutView.PDFLayoutListe
 			m_view.PDFOpen(m_doc, PDFGLViewAct.this);
 			m_view.setReadOnly(getIntent().getBooleanExtra("READ_ONLY", false));
 			m_controller = new PDFViewController(m_layout, m_view, m_path,m_asset_stream != null || m_http_stream != null);
+			m_controller.SetSaveListener(new PDFViewController.SaveListener() {
+				@Override
+				public void onSave() {
+					onClose(true);
+				}
+			});
 			m_controller.SetPagesListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
@@ -283,6 +289,12 @@ public class PDFGLViewAct extends Activity implements ILayoutView.PDFLayoutListe
 			m_doc = Document.BundleRestore(savedInstanceState);//restore Document object
 			m_view.PDFOpen(m_doc, this);
 			m_controller = new PDFViewController(m_layout, m_view, m_path,m_asset_stream != null || m_http_stream != null);
+			m_controller.SetSaveListener(new PDFViewController.SaveListener() {
+				@Override
+				public void onSave() {
+					onClose(true);
+				}
+			});
 			m_controller.SetPagesListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {

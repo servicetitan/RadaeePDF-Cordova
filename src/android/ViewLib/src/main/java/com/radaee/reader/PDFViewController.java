@@ -51,11 +51,17 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+
 import java.text.Bidi;
 import java.util.Locale;
 import java.util.UUID;
 
 public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChangeListener {
+
+    public interface SaveListener {
+        void onSave();
+    }
+
     static final public int NOT_MODIFIED = 0;
     static final public int MODIFIED_NOT_SAVED = 1;
     static final public int MODIFIED_AND_SAVED = 2;
@@ -115,6 +121,9 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
     private PDFThumbView mThumbView;
     private boolean m_isAsset;
     private String m_docPath;
+
+    private SaveListener mSaveListener;
+
     public PDFViewController(RelativeLayout parent, ILayoutView view, String docPath, boolean isAsset) {
         m_parent = parent;
         m_view = view;
@@ -172,9 +181,9 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
         btn_undo.setOnClickListener(this);
         btn_redo.setOnClickListener(this);
         btn_more.setOnClickListener(this);
-        btn_save.setOnClickListener(this);
         btn_print.setOnClickListener(this);
-        btn_share.setOnClickListener(this);
+        btn_save.setOnClickListener(this);
+       btn_share.setOnClickListener(this);
         btn_add_bookmark.setOnClickListener(this);
         btn_show_bookmarks.setOnClickListener(this);
         btn_find_back.setOnClickListener(this);
@@ -287,6 +296,10 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
     public void SetPagesListener(OnClickListener listener)
     {
         btn_pages_list.setOnClickListener(listener);
+    }
+    public void SetSaveListener(SaveListener listener)
+    {
+        mSaveListener = listener;
     }
     private void SetBtnEnabled(View btn, boolean enable) {
         if (enable) {
@@ -510,6 +523,9 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
         } else if (arg0 == btn_save) {
             savePDF();
             m_menu_more.MenuDismiss();
+            if(mSaveListener != null) {
+                mSaveListener.onSave();
+            }
         } else if (arg0 == btn_print) {
             printPDF();
             m_menu_more.MenuDismiss();
@@ -817,6 +833,7 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
             sFileState = MODIFIED_AND_SAVED;
             // Toast.makeText(m_parent.getContext(), R.string.saved_message, Toast.LENGTH_SHORT).show();
         }
+        // RadaeePluginCallback.getInstance().willCloseReader();
     }
 
     @TargetApi(Build.VERSION_CODES.KITKAT)
