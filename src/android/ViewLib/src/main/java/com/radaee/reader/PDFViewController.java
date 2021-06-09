@@ -1147,7 +1147,7 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
                     for (int i = 0; i < pagesArray.length(); i++) {
                         CommonUtil.parsePageJsonFormFields(pagesArray.getJSONObject(i), m_view.PDFGetDoc());
                     }
-                    m_view.PDFUpdateCurrPage();
+                    m_view.PDFUpdatePage(i);
                     return "property set successfully";
                 } else return "\"Pages\" attribute is missing";
             } catch (Exception e) {
@@ -1198,8 +1198,8 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
             if (page != null) {
                 page.ObjsStart();
                 if(page.FlatAnnots()) {
-                    if (m_view != null && pageNo == m_view.PDFGetCurrPage())
-                        m_view.PDFUpdateCurrPage();
+                    if (m_view != null)
+                        m_view.PDFUpdatePage(pageNo);
                     return document.Save();
                 }
             }

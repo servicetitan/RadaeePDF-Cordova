@@ -2390,6 +2390,11 @@ public class PDFLayoutView extends View implements ILayoutView, LayoutListener {
             m_layout.vRenderSync(m_layout.vGetPage(m_pageno));
     }
 
+    public void PDFUpdatePage(int pageno) {
+        if (m_layout != null)
+            m_layout.vRenderSync(m_layout.vGetPage(pageno));
+    }
+
     public void refreshPageAsync(int page) {
         if (m_layout != null && page < m_doc.GetPageCount())
             m_layout.vRenderAsync(m_layout.vGetPage(page));

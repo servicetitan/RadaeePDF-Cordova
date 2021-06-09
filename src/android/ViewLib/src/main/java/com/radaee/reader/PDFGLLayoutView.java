@@ -175,6 +175,12 @@ public class PDFGLLayoutView extends RelativeLayout implements ILayoutView {
     }
 
     @Override
+    public void PDFUpdatePage(int pageno)
+    {
+        m_view.PDFUpdatePage(pageno);
+    }
+
+    @Override
     public int PDFGetCurrPage() {
         return m_view.PDFGetCurrPage();
     }

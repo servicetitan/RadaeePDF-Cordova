@@ -2604,6 +2604,13 @@ public class GLView extends GLSurfaceView implements GLCanvas.CanvasListener {
         }
     }
 
+    public void PDFUpdatePage(int pageno) {
+        if (m_layout != null) {
+            GLPage page = m_layout.vGetPage(pageno);
+            if (page != null) m_layout.gl_render(page);
+        }
+    }
+
     public void PDFAddAnnotRect(float x, float y, float width, float height, int p) {
         // init the page
         GLPage vpage = m_layout.vGetPage(p);
