@@ -77,6 +77,7 @@
     <string name="clear">Elimina</string>
     <string name="delete">Elimina</string>
     <string name="save">Salva</string>
+    <string name="save_and_exit">Save &amp; Exit</string>
     <string name="saved_message">Documento salvato</string>
     <string name="delete_signature_message">È già presente una firma, vuoi cancellarla?</string>
     <string name="warning">Avviso</string>

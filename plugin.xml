@@ -419,6 +419,7 @@
             <string name="confirm">Confirm</string>
             <string name="clear">Clear</string>
             <string name="save">Save</string>
+            <string name="save_and_exit">Save &amp; Exit</string>
             <string name="saved_message">Document saved</string>
             <string name="delete_signature_message">A signature is already present, do you want to delete it?</string>
             <string name="warning">Warning</string>
