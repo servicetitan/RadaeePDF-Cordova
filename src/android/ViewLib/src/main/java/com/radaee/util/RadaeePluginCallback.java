@@ -224,6 +224,7 @@ public class RadaeePluginCallback {
         String renderAnnotToFile(int page, int annotIndex, String renderPath, int bitmapWidth, int bitmapHeight);
         boolean flatAnnotAtPage(int page);
         boolean flatAnnots();
+        boolean flatAnnotsAtFile(String path);
         boolean saveDocumentToPath(String path, String pswd);
         String onGetTextAnnotationDetails(int page);
         String onGetMarkupAnnotationDetails(int page);

@@ -13,6 +13,7 @@ import android.print.PageRange;
 import android.print.PrintAttributes;
 import android.print.PrintDocumentAdapter;
 import android.print.PrintDocumentInfo;
+import android.print.PrintJob;
 import android.print.PrintManager;
 import android.text.TextUtils;
 import android.view.KeyEvent;
@@ -833,31 +834,38 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
             sFileState = MODIFIED_AND_SAVED;
             // Toast.makeText(m_parent.getContext(), R.string.saved_message, Toast.LENGTH_SHORT).show();
         }
-        // RadaeePluginCallback.getInstance().willCloseReader();
     }
 
     @TargetApi(Build.VERSION_CODES.KITKAT)
     private void printPDF() {
         PrintManager mPrintManager = (PrintManager) m_parent.getContext().getSystemService(Context.PRINT_SERVICE);
         String mJobName = "";
+        String flattenedDocPath = "";
 
         if (!TextUtils.isEmpty(m_docPath)) {
             String docName = m_docPath;
             mJobName += TextUtils.substring(docName, docName.lastIndexOf("/") + 1, docName.length()).replace(".pdf", "_print.pdf");
+            flattenedDocPath = m_docPath + ".flat_print.pdf";
         } else {
             String docName = UUID.randomUUID().toString() + ".pdf";
             mJobName += TextUtils.substring(docName, docName.lastIndexOf("/") + 1, docName.length()).replace(".pdf", "_print.pdf");
+            flattenedDocPath = docName + ".flat_print.pdf";
         }
 
+        mControllerListner.saveDocumentToPath(flattenedDocPath, null);
+        mControllerListner.flatAnnotsAtFile(flattenedDocPath);
+        Document documentToPrint = new Document();
+        documentToPrint.Open(flattenedDocPath, null);
+        int mTotalPages = documentToPrint.GetPageCount();
+        documentToPrint.Close();
+
         final String finalJobName = mJobName;
+        final String finalDocPath = flattenedDocPath;
         mPrintManager.print(mJobName, new PrintDocumentAdapter() {
-            int mTotalPages = 0;
 
             @Override
             public void onLayout(PrintAttributes oldAttributes, PrintAttributes newAttributes, CancellationSignal cancellationSignal,
                                  LayoutResultCallback callback, Bundle extras) {
-                mTotalPages = m_view.PDFGetDoc().GetPageCount();
-
                 if (cancellationSignal.isCanceled()) { // Respond to cancellation request
                     callback.onLayoutCancelled();
                     return;
@@ -877,18 +885,27 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
             }
 
             @Override
+            public void onFinish() {
+                super.onFinish();
+                File myFile = new File(finalDocPath);
+                if (myFile.exists()) {
+                    myFile.delete();
+                }
+            }
+
+            @Override
             public void onWrite(PageRange[] pages, ParcelFileDescriptor destination, CancellationSignal cancellationSignal,
                                 WriteResultCallback callback) {
                 InputStream input;
                 OutputStream output;
                 try {
 
-                    if (!TextUtils.isEmpty(m_docPath)) {
+                    if (!TextUtils.isEmpty(finalDocPath)) {
 
                         if (m_isAsset) {
-                            input = m_parent.getContext().getAssets().open(m_docPath);
+                            input = m_parent.getContext().getAssets().open(finalDocPath);
                         } else {
-                            input = new FileInputStream(m_docPath);
+                            input = new FileInputStream(finalDocPath);
                         }
 
                         output = new FileOutputStream(destination.getFileDescriptor());
@@ -1228,6 +1245,20 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
                 if (!flatAnnotsAtPage(document, i))
                     return false;
             }
+            return true;
+        }
+
+        @Override
+        public boolean flatAnnotsAtFile(String path) {
+            Document document = new Document();
+            document.Open(path, "");
+            if(document == null || !document.IsOpened()) return false;
+            for (int i = 0; i < document.GetPageCount(); i++) {
+                if (!flatAnnotsAtPage(document, i))
+                    return false;
+            }
+            document.Save();
+            document.Close();
             return true;
         }
 
