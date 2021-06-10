@@ -2769,13 +2769,12 @@
 - (bool)flatAnnotsAtFile:(NSString *)path
 {
     PDFDoc *doc = [[PDFDoc alloc] init];
-    [doc open:[path] :@""];
+    [doc open:path :@""];
     for (int page = 0; page != [doc pageCount]; page++) {
         [self flatAnnotAtPage:page doc:doc];
         if (page == [m_view vGetCurrentPage]) [m_view refreshCurrentPage];
     }
     [doc save];
-    [doc dealloc];
     return nil;
 }
 
