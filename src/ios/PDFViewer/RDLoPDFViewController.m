@@ -2133,6 +2133,8 @@
 {
     NSString *dir = [GLOBAL.g_pdf_path stringByAppendingString:@"/"];
     NSString *path = [dir stringByAppendingString:GLOBAL.g_pdf_name];
+    NSString *flattenedDocPath = [path stringByAppendingString:@".flat_print.pdf"];
+
     if (![[NSFileManager defaultManager] fileExistsAtPath:path]) {
         UIAlertController* alert = [UIAlertController alertControllerWithTitle:@"Warning"
                                        message:@"PDF file not available"
@@ -2143,7 +2145,11 @@
         return;
     }
     
-    NSData *myData = [NSData dataWithContentsOfFile:path];
+    [self saveDocumentToPath:(flattenedDocPath)];
+    [self flatAnnotsAtFile:(flattenedDocPath)];
+
+    
+    NSData *myData = [NSData dataWithContentsOfFile:flattenedDocPath];
     
     UIPrintInteractionController *pic = [UIPrintInteractionController sharedPrintController];
     
@@ -2152,7 +2158,7 @@
         
         UIPrintInfo *printInfo = [UIPrintInfo printInfo];
         printInfo.outputType = UIPrintInfoOutputGeneral;
-        printInfo.jobName = [GLOBAL.g_pdf_path lastPathComponent];
+        printInfo.jobName = [flattenedDocPath lastPathComponent];
         printInfo.duplex = UIPrintInfoDuplexLongEdge;
         pic.printInfo = printInfo;
         pic.showsPageRange = YES;
@@ -2162,6 +2168,8 @@
             if (!completed && error) {
                 NSLog(@"FAILED! due to error in domain %@ with error code %ld", error.domain, (long)error.code);
             }
+            NSError *_error = nil;
+            [[NSFileManager defaultManager] removeItemAtPath:flattenedDocPath error:&_error];
         };
         
         [pic presentAnimated:YES completionHandler:completionHandler];
@@ -2180,7 +2188,14 @@
 
 - (void)sharePDF
 {
-    NSURL *url = [NSURL fileURLWithPath:[GLOBAL.g_pdf_path stringByAppendingPathComponent:GLOBAL.g_pdf_name]];
+    NSString *dir = [GLOBAL.g_pdf_path stringByAppendingString:@"/"];
+    NSString *path = [dir stringByAppendingString:GLOBAL.g_pdf_name];
+    NSString *flattenedDocPath = [path stringByAppendingString:@".flat_print.pdf"];
+    [self saveDocumentToPath:(flattenedDocPath)];
+    [self flatAnnotsAtFile:(flattenedDocPath)];
+    
+    NSURL *url = [NSURL fileURLWithPath:flattenedDocPath];
+
     if(url)
     {
         UIActivityViewController *a = [[UIActivityViewController alloc] initWithActivityItems:@[url] applicationActivities:nil];
@@ -2191,6 +2206,10 @@
                                         UIActivityTypeAddToReadingList, UIActivityTypePostToFlickr,
                                         UIActivityTypePostToVimeo, UIActivityTypePostToTencentWeibo];
         a.excludedActivityTypes = excludedActivities;
+        a.completionWithItemsHandler = ^(NSString *activityType, BOOL completed, NSArray *returnedItems, NSError *activityError) {
+            NSError *error = nil;
+            [[NSFileManager defaultManager] removeItemAtPath:flattenedDocPath error:&error];
+        };
         
         if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
             a.modalPresentationStyle = UIModalPresentationPopover;
@@ -2744,6 +2763,19 @@
         [self flatAnnotAtPage:page doc:doc];
         if (page == [m_view vGetCurrentPage]) [m_view refreshCurrentPage];
     }
+    return nil;
+}
+
+- (bool)flatAnnotsAtFile:(NSString *)path
+{
+    PDFDoc *doc = [[PDFDoc alloc] init];
+    [doc open:[path] :@""];
+    for (int page = 0; page != [doc pageCount]; page++) {
+        [self flatAnnotAtPage:page doc:doc];
+        if (page == [m_view vGetCurrentPage]) [m_view refreshCurrentPage];
+    }
+    [doc save];
+    [doc dealloc];
     return nil;
 }
 

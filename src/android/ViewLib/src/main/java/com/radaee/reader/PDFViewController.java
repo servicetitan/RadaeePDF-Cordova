@@ -939,7 +939,12 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
 
     private void sharePDF() {
         if (!TextUtils.isEmpty(m_docPath)) {
-            File outputFile = new File(m_docPath);
+            String flattenedDocPath = m_docPath + ".flat_print.pdf";
+            mControllerListner.saveDocumentToPath(flattenedDocPath, null);
+            mControllerListner.flatAnnotsAtFile(flattenedDocPath);
+
+            File outputFile = new File(flattenedDocPath);
+            outputFile.deleteOnExit();
             Uri uri = Uri.fromFile(outputFile);
 
             Intent share = new Intent();
