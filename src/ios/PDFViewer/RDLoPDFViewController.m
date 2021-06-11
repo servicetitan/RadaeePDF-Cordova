@@ -1610,7 +1610,7 @@
 {
     if([m_view forceSave])
     {
-        [self.navigationController popViewControllerAnimated:YES];
+        // [self.navigationController popViewControllerAnimated:YES];
         // UIAlertController* alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Notice", nil)
         //                                                                message:NSLocalizedString(@"Document saved", nil)
         //                                                         preferredStyle:UIAlertControllerStyleAlert];
