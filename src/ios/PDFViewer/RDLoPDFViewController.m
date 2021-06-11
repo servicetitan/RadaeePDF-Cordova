@@ -1276,9 +1276,10 @@
                                         [self OnMeta];
                                     }];
         
-        UIAlertAction *savePDF = [UIAlertAction actionWithTitle:NSLocalizedString(@"Save", nil) style:UIAlertActionStyleDefault handler:^(UIAlertAction * action)
+        UIAlertAction *savePDF = [UIAlertAction actionWithTitle:NSLocalizedString(@"Save and Exit", nil) style:UIAlertActionStyleDefault handler:^(UIAlertAction * action)
                                   {
                                       [self savePdf];
+                                      [self closeView];
                                   }];
         
         UIAlertAction *printPDF =  [UIAlertAction actionWithTitle:NSLocalizedString(@"Print", nil) style:UIAlertActionStyleDefault handler:^(UIAlertAction * action)
@@ -1362,6 +1363,7 @@
             break;
         case 5:
             [self savePdf];
+            [self closeView];
             break;
         case 6:
             [self printPdf];
@@ -1608,6 +1610,7 @@
 {
     if([m_view forceSave])
     {
+        [self.navigationController popViewControllerAnimated:YES];
         // UIAlertController* alert = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"Notice", nil)
         //                                                                message:NSLocalizedString(@"Document saved", nil)
         //                                                         preferredStyle:UIAlertControllerStyleAlert];

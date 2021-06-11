@@ -28,7 +28,7 @@
     UIImage *printPDF = (_printImage) ? _printImage : [UIImage imageNamed:@"btn_print"];
     UIImage *share = (_shareImage) ? _shareImage : [UIImage imageNamed:@"btn_share"];
     
-    actionTitle = [NSArray arrayWithObjects:NSLocalizedString(@"View Mode", nil),NSLocalizedString(@"Add Bookmark", nil), NSLocalizedString(@"Bookmark List", nil), NSLocalizedString(@"View Menu", nil),NSLocalizedString(@"Meta", nil), NSLocalizedString(@"Save", nil), NSLocalizedString(@"Print", nil), NSLocalizedString(@"Share", nil), nil];
+    actionTitle = [NSArray arrayWithObjects:NSLocalizedString(@"View Mode", nil),NSLocalizedString(@"Add Bookmark", nil), NSLocalizedString(@"Bookmark List", nil), NSLocalizedString(@"View Menu", nil),NSLocalizedString(@"Meta", nil), NSLocalizedString(@"Save and Exit", nil), NSLocalizedString(@"Print", nil), NSLocalizedString(@"Share", nil), nil];
     actionImage = [NSArray arrayWithObjects:viewMode, addBookMark, bookMarkList, viewMenu, meta, savePDF, printPDF, share, nil];
 }
 
