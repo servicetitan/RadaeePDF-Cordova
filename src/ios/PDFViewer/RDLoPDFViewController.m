@@ -318,6 +318,12 @@
     }
     
     [self refreshPageNumLabelPosition];
+    [self refreshPdfViewPosition];
+}
+
+- (void)refreshPdfViewPosition {
+    CGRect rect = [self screenRect];
+    m_view.frame = CGRectMake(0, [self barHeightDistance], rect.size.width, rect.size.height - GLOBAL.g_thumbview_height - [self barHeightDistance]);
 }
 
 -(int)PDFOpen:(NSString *)path : (NSString *)pwd {
