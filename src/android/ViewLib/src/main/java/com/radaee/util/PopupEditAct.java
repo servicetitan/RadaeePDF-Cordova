@@ -69,15 +69,15 @@ public class PopupEditAct extends Activity {
                 switch (type) {
                     case 1:
                         m_txt.setSingleLine();
-                        m_txt.setInputType(InputType.TYPE_CLASS_TEXT + InputType.TYPE_TEXT_VARIATION_NORMAL);
+                        m_txt.setInputType(InputType.TYPE_CLASS_TEXT + InputType.TYPE_TEXT_VARIATION_NORMAL + InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
                         break;
                     case 2:
                         m_txt.setSingleLine();
-                        m_txt.setInputType(InputType.TYPE_CLASS_TEXT + InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                        m_txt.setInputType(InputType.TYPE_CLASS_TEXT + InputType.TYPE_TEXT_VARIATION_PASSWORD + InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
                         break;
                     case 3:
                         m_txt.setSingleLine(false);
-                        m_txt.setInputType(InputType.TYPE_CLASS_TEXT + InputType.TYPE_TEXT_VARIATION_NORMAL + InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+                        m_txt.setInputType(InputType.TYPE_CLASS_TEXT + InputType.TYPE_TEXT_VARIATION_NORMAL + InputType.TYPE_TEXT_FLAG_MULTI_LINE + InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
                         break;
                 }
                 if(maxlen > 1020)

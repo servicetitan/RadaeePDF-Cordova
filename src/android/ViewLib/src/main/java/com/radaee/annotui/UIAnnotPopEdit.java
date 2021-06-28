@@ -43,15 +43,15 @@ public class UIAnnotPopEdit extends UIAnnotPop {
         switch (annot.GetEditType()) {
             case 1:
                 m_edit.setSingleLine();
-                m_edit.setInputType(InputType.TYPE_CLASS_TEXT + InputType.TYPE_TEXT_VARIATION_NORMAL);
+                m_edit.setInputType(InputType.TYPE_CLASS_TEXT + InputType.TYPE_TEXT_VARIATION_NORMAL + InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
                 break;
             case 2:
                 m_edit.setSingleLine();
-                m_edit.setInputType(InputType.TYPE_CLASS_TEXT + InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                m_edit.setInputType(InputType.TYPE_CLASS_TEXT + InputType.TYPE_TEXT_VARIATION_PASSWORD + InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
                 break;
             case 3:
                 m_edit.setSingleLine(false);
-                m_edit.setInputType(InputType.TYPE_CLASS_TEXT + InputType.TYPE_TEXT_VARIATION_NORMAL + InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+                m_edit.setInputType(InputType.TYPE_CLASS_TEXT + InputType.TYPE_TEXT_VARIATION_NORMAL + InputType.TYPE_TEXT_FLAG_MULTI_LINE + InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
                 break;
         }
         int maxlen = annot.GetEditMaxlen();
