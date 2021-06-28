@@ -285,6 +285,8 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
         btn_outline.setVisibility(RadaeePDFManager.sHideOutlineButton ? View.GONE : View.VISIBLE);
         btn_add_bookmark.setVisibility(RadaeePDFManager.sHideAddBookmarkButton ? View.GONE : View.VISIBLE);
         btn_show_bookmarks.setVisibility(RadaeePDFManager.sHideShowBookmarksButton ? View.GONE : View.VISIBLE);
+        m_bar_cmd.BarShow();
+        m_thumb_view.BarShow();
     }
 
     public static int getFileState() {
@@ -337,10 +339,7 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
                 break;
             case BAR_CMD:
                 if (annot != null) {
-                    m_bar_cmd.BarHide();
-                    if (mNavigationMode == NAVIGATION_THUMBS)
-                        m_thumb_view.BarHide();
-                    else if (mNavigationMode == NAVIGATION_SEEK)
+                    if (mNavigationMode == NAVIGATION_SEEK)
                         m_bar_seek.BarHide();
 
                     m_bar_status = BAR_NONE;
@@ -375,11 +374,8 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
             case BAR_CMD:
                 m_menu_view.MenuDismiss();
                 m_menu_more.MenuDismiss();
-                m_bar_cmd.BarHide();
 
-                if (mNavigationMode == NAVIGATION_THUMBS)
-                    m_thumb_view.BarHide();
-                else if (mNavigationMode == NAVIGATION_SEEK)
+                if (mNavigationMode == NAVIGATION_SEEK)
                     m_bar_seek.BarHide();
                 m_bar_status = BAR_NONE;
                 break;
@@ -443,11 +439,8 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
                 if (m_set) OnSelectEnd();
                 m_menu_view.MenuDismiss();
                 m_menu_more.MenuDismiss();
-                m_bar_cmd.BarHide();
 
-                if (mNavigationMode == NAVIGATION_THUMBS)
-                    m_thumb_view.BarHide();
-                else if (mNavigationMode == NAVIGATION_SEEK)
+                if (mNavigationMode == NAVIGATION_SEEK)
                     m_bar_seek.BarHide();
                 m_bar_status = BAR_NONE;
                 return false;
@@ -510,9 +503,7 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
         } else if (arg0 == btn_find) {
             m_bar_cmd.BarSwitch(m_bar_find);
 
-            if (mNavigationMode == NAVIGATION_THUMBS)
-                m_thumb_view.BarHide();
-            else if (mNavigationMode == NAVIGATION_SEEK)
+            if (mNavigationMode == NAVIGATION_SEEK)
                 m_bar_seek.BarHide();
             m_bar_status = BAR_FIND;
         } else if (arg0 == btn_undo) {
@@ -546,9 +537,7 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
         } else if (arg0 == btn_annot) {
             m_bar_cmd.BarSwitch(m_bar_annot);
 
-            if (mNavigationMode == NAVIGATION_THUMBS)
-                m_thumb_view.BarHide();
-            else if (mNavigationMode == NAVIGATION_SEEK)
+            if (mNavigationMode == NAVIGATION_SEEK)
                 m_bar_seek.BarHide();
             m_bar_status = BAR_ANNOT;
         } else if (arg0 == btn_annot_ink) {
@@ -1082,11 +1071,8 @@ public class PDFViewController implements OnClickListener, SeekBar.OnSeekBarChan
                     if (immersive) {
                         m_menu_view.MenuDismiss();
                         m_menu_more.MenuDismiss();
-                        m_bar_cmd.BarHide();
 
-                        if (mNavigationMode == NAVIGATION_THUMBS)
-                            m_thumb_view.BarHide();
-                        else if (mNavigationMode == NAVIGATION_SEEK)
+                        if (mNavigationMode == NAVIGATION_SEEK)
                             m_bar_seek.BarHide();
                         m_bar_status = BAR_NONE;
                     }

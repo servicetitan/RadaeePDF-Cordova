@@ -1,6 +1,7 @@
 package com.radaee.view;
 
 import android.content.Context;
+import android.util.DisplayMetrics;
 
 public class GLLayoutVert extends GLLayout {
     public static final int ALIGN_CENTER = 0;
@@ -8,11 +9,13 @@ public class GLLayoutVert extends GLLayout {
     public static final int ALIGN_RIGHT = 2;
     private int m_align;
     private boolean m_same_width;
+    private Context context;
     public GLLayoutVert(Context context, int align, boolean same_width)
     {
         super(context);
         m_same_width = same_width;
         m_align = align;
+        this.context = context;
     }
     @Override
     public int vGetPage(int vx, int vy) {
@@ -46,7 +49,7 @@ public class GLLayoutVert extends GLLayout {
         if(m_scale == scale) return;
         m_scale = scale;
         m_layw = (int)(size[0] * m_scale) + m_page_gap;
-        int y = m_page_gap >> 1;
+        int y = (m_page_gap >> 1) + 100;
         for(int pcur = 0; pcur < m_page_cnt; pcur++)
         {
             int x;
@@ -70,6 +73,10 @@ public class GLLayoutVert extends GLLayout {
             if(!zoom) m_pages[pcur].gl_alloc();
             y += (int)(m_doc.GetPageHeight(pcur) * pg_scale) + m_page_gap;
         }
-        m_layh = y - (m_page_gap >> 1);
+        m_layh = y - (m_page_gap >> 1) + ((int)convertDpToPixel(100, context));
+    }
+
+    public static float convertDpToPixel(float dp, Context context){
+        return dp * ((float) context.getResources().getDisplayMetrics().densityDpi / DisplayMetrics.DENSITY_DEFAULT);
     }
 }
