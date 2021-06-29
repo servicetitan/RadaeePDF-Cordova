@@ -6,6 +6,8 @@ import com.radaee.pdf.Global;
 
 public class PDFLayoutVert extends PDFLayout
 {
+	private Context context;
+
 	@Override
 	public void vLayout()
 	{
@@ -22,7 +24,7 @@ public class PDFLayoutVert extends PDFLayout
 		if(m_scale > m_scale_max) m_scale = m_scale_max;
 		m_tw = (int)(m_page_maxw * m_scale);
 		m_th = 0;
-		int y = m_page_gap>>1;
+		int y = (m_page_gap>>1) + dip2px(45);
 		boolean clip = m_scale / m_scale_min > m_zoom_level_clip;
 		for(cur = 0;cur < cnt;cur++)
 		{
@@ -39,12 +41,13 @@ public class PDFLayoutVert extends PDFLayout
 			m_pages[cur].vLayout(x, y, pageScale, clipPage);
 			y += h + m_page_gap;
 		}
-		m_th = y - (m_page_gap>>1);
+		m_th = y - (m_page_gap>>1) + dip2px(100);
 	}
 
 	public PDFLayoutVert(Context context)
 	{
 		super(context);
+		this.context = context;
 	}
 
 	@Override
@@ -83,4 +86,9 @@ public class PDFLayoutVert extends PDFLayout
             }
 		return -1;
 	}
+
+	private int dip2px(float dpValue) {
+        float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (dpValue * scale + 0.5f);
+    }
 }

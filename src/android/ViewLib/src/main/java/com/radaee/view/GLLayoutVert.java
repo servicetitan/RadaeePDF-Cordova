@@ -10,6 +10,7 @@ public class GLLayoutVert extends GLLayout {
     private int m_align;
     private boolean m_same_width;
     private Context context;
+    
     public GLLayoutVert(Context context, int align, boolean same_width)
     {
         super(context);
@@ -47,9 +48,10 @@ public class GLLayoutVert extends GLLayout {
         if(scale < m_scale_min) scale = m_scale_min;
         if(scale > max_scale) scale = max_scale;
         if(m_scale == scale) return;
+
         m_scale = scale;
         m_layw = (int)(size[0] * m_scale) + m_page_gap;
-        int y = (m_page_gap >> 1) + 100;
+        int y = (m_page_gap >> 1) + dip2px(45);
         for(int pcur = 0; pcur < m_page_cnt; pcur++)
         {
             int x;
@@ -73,10 +75,12 @@ public class GLLayoutVert extends GLLayout {
             if(!zoom) m_pages[pcur].gl_alloc();
             y += (int)(m_doc.GetPageHeight(pcur) * pg_scale) + m_page_gap;
         }
-        m_layh = y - (m_page_gap >> 1) + ((int)convertDpToPixel(100, context));
+
+        m_layh = y - (m_page_gap >> 1) + dip2px(100);
     }
 
-    public static float convertDpToPixel(float dp, Context context){
-        return dp * ((float) context.getResources().getDisplayMetrics().densityDpi / DisplayMetrics.DENSITY_DEFAULT);
+    private int dip2px(float dpValue) {
+        float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (dpValue * scale + 0.5f);
     }
 }
