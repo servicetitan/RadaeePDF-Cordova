@@ -318,12 +318,16 @@
     }
     
     [self refreshPageNumLabelPosition];
-    [self refreshPdfViewPosition];
 }
 
 - (void)refreshPdfViewPosition {
     CGRect rect = [self screenRect];
-    m_view.frame = CGRectMake(0, [self barHeightDistance], rect.size.width, rect.size.height - GLOBAL.g_thumbview_height - [self barHeightDistance]);
+    if (isImmersive) {
+        m_view.frame = rect;
+    }
+    else {
+        m_view.frame = CGRectMake(rect.origin.x, rect.origin.y, rect.size.width, rect.size.height - GLOBAL.g_thumbview_height);
+    }
 }
 
 -(int)PDFOpen:(NSString *)path : (NSString *)pwd {
@@ -2928,6 +2932,7 @@
     [self.view bringSubviewToFront:m_Thumbview];
     [self refreshStatusBar];
     [self refreshToolbarPosition];
+    [self refreshPdfViewPosition];
 }
 
 - (void)hideBars
@@ -2941,6 +2946,7 @@
     statusBarHidden = YES;
     isImmersive = YES;
     [self refreshStatusBar];
+    [self refreshPdfViewPosition];
 }
 
 - (void)refreshCurrentPage
