@@ -1173,6 +1173,8 @@
 
 - (void)closeView
 {
+    UIViewController *presentedViewController = [self.navigationController presentedViewController];
+    [presentedViewController dismissViewControllerAnimated:NO completion:nil];
     [self closeView:false];
 }
 
