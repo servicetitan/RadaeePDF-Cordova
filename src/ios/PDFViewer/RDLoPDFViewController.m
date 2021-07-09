@@ -167,6 +167,7 @@
     }
     
     [self pageNumLabelInit:pagenow];
+    [self refreshPdfViewPosition];
 }
 
 -(void)viewWillDisappear:(BOOL)animated
